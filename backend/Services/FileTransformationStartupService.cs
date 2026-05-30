@@ -16,7 +16,7 @@ public class FileTransformationStartupService : IScheduledTask
 {
     public string Name => "Moonfin Startup";
     public string Key => "Moonfin.Server.Startup";
-    public string Description => "Manually registers Moonfin's file transformations. Normally runs automatically — use this only if the UI injection didn't load.";
+    public string Description => "Manually registers Moonfin's file transformations. Normally runs automatically - use this only if the header entrypoint injection didn't load.";
     public string Category => "Startup Services";
 
     private readonly ILogger<FileTransformationStartupService> _logger;
@@ -46,7 +46,7 @@ public class FileTransformationStartupService : IScheduledTask
         if (ftAssembly == null)
         {
             _logger.LogWarning(
-                "Moonfin: File Transformation plugin not found. Frontend auto-injection is disabled. " +
+                "Moonfin: File Transformation plugin not found. Header entrypoint injection is disabled. " +
                 "Install from https://github.com/IAmParadox27/jellyfin-plugin-file-transformation");
             return Task.CompletedTask;
         }

@@ -3,6 +3,95 @@
 <head>
     <meta charset="utf-8">
     <title>Moonfin</title>
+    <style>
+        #MoonfinConfigPage .verticalSection.collapsibleSection {
+            margin-bottom: 0.9em;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            overflow: hidden;
+        }
+
+        #MoonfinConfigPage .collapsibleSectionTrigger,
+        #MoonfinConfigPage .collapsibleSubsectionTrigger {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1em;
+            border: 0;
+            background: transparent;
+            color: inherit;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        #MoonfinConfigPage .collapsibleSectionTrigger {
+            padding: 0.85em 1em;
+            font-size: 1em;
+            font-weight: 600;
+        }
+
+        #MoonfinConfigPage .collapsibleSectionContent {
+            display: none;
+            padding: 0 1em 1em;
+        }
+
+        #MoonfinConfigPage .collapsibleSection.is-open .collapsibleSectionContent {
+            display: block;
+        }
+
+        #MoonfinConfigPage .collapsibleSectionChevron,
+        #MoonfinConfigPage .collapsibleSubsectionChevron {
+            color: rgba(255, 255, 255, 0.75);
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        #MoonfinConfigPage .collapsibleSection.is-open .collapsibleSectionChevron,
+        #MoonfinConfigPage .collapsibleSubsection.is-open .collapsibleSubsectionChevron {
+            transform: rotate(90deg);
+        }
+
+        #MoonfinConfigPage .collapsibleSubsection {
+            margin-top: 0.75em;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.015);
+            overflow: hidden;
+        }
+
+        #MoonfinConfigPage .collapsibleSubsectionTrigger {
+            padding: 0.7em 0.9em;
+            font-size: 0.95em;
+            font-weight: 600;
+            color: #00a4dc;
+        }
+
+        #MoonfinConfigPage .collapsibleSubsectionContent {
+            display: none;
+            padding: 0 0.9em 0.9em;
+        }
+
+        #MoonfinConfigPage .collapsibleSubsection.is-open .collapsibleSubsectionContent {
+            display: block;
+        }
+
+        #MoonfinConfigPage .collapsibleSectionContent > :first-child,
+        #MoonfinConfigPage .collapsibleSubsectionContent > :first-child {
+            margin-top: 0;
+        }
+
+        #MoonfinConfigPage #AdminThemeChooseBtn {
+            background: rgba(255, 255, 255, 0.08);
+            color: inherit;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        #MoonfinConfigPage #AdminThemeChooseBtn:hover {
+            background: rgba(255, 255, 255, 0.14);
+        }
+    </style>
 </head>
 <body>
     <div id="MoonfinConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
@@ -27,6 +116,38 @@
                     </div>
 
                     <div class="verticalSection">
+                        <h3 class="sectionTitle">Moonfin Web Client</h3>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="WebDefaultServerUrl">Default Server URL (Optional)</label>
+                            <input type="url" id="WebDefaultServerUrl" is="emby-input" placeholder="https://jellyfin.example.com" />
+                            <div class="fieldDescription">
+                                Pre-fills the Add Server dialog in Moonfin web.
+                                Leave empty to auto-fill from the current Jellyfin origin.
+                                Use the Jellyfin base URL (for example, <code>http://192.168.1.10:8096</code>), not <code>/web</code>.
+                            </div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="WebForcedServerUrl">Forced Server URL (Optional)</label>
+                            <input type="url" id="WebForcedServerUrl" is="emby-input" placeholder="https://jellyfin.example.com" />
+                            <div class="fieldDescription">
+                                Forces Moonfin web to auto-connect to this URL on load.
+                                Leave empty to use plugin-mode auto-connect behavior.
+                                Use the Jellyfin base URL and do not include a <code>/web</code> suffix.
+                            </div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input type="checkbox" id="WebEnableWebRtcScan" is="emby-checkbox" />
+                                <span>Enable WebRTC Private Subnet Scan</span>
+                            </label>
+                            <div class="fieldDescription">
+                                Allows Moonfin web to scan private LAN ranges via WebRTC hints.
+                                Disable if your browser environment blocks or restricts WebRTC.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
                         <h3 class="sectionTitle">Seerr Integration</h3>
                         <div class="checkboxContainer checkboxContainer-withDescription">
                             <label class="emby-checkbox-label">
@@ -42,7 +163,7 @@
                             <input type="url" id="JellyseerrUrl" is="emby-input" placeholder="https://seerr.example.com" />
                             <div class="fieldDescription">
                                 The URL Jellyfin can reach for your Seerr instance.
-                                Moonfin always uses the server-side proxy for iframe and API requests to keep SSO seamless.
+                                Moonfin always uses the server-side proxy for API requests to keep SSO seamless.
                                 If Jellyfin is behind a reverse proxy, forward all <code>/Moonfin/</code> paths to Jellyfin.
                             </div>
                         </div>
@@ -58,8 +179,7 @@
                         <div style="background-color: rgba(0, 164, 220, 0.1); border-left: 4px solid #00a4dc; border-radius: 4px; padding: 1em 1.5em; margin: 1em 0;">
                             <strong>SSO Proxy:</strong> When Seerr is enabled, Moonfin provides single sign-on.
                             Users authenticate once with their Jellyfin credentials, and the session is stored server-side.
-                            All Moonfin clients (web, Android, Roku, webOS, Tizen, etc) access Seerr through
-                            <code>/Moonfin/Jellyseerr/Web/</code> (iframe) and <code>/Moonfin/Jellyseerr/Api/</code> (API)
+                            All Moonfin clients access Seerr API through <code>/Moonfin/Jellyseerr/Api/</code>
                             without re-authenticating.
                         </div>
                     </div>
@@ -103,14 +223,71 @@
                             User's device profile &rarr; User's global settings &rarr; <strong>These admin defaults</strong> &rarr; Built-in defaults.
                         </div>
 
-                        <h4 style="margin: 1em 0 0.5em; font-size: 0.95em; color: #00a4dc;">UI Features</h4>
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input type="checkbox" id="DefaultNavbarEnabled" is="emby-checkbox" />
-                                <span>Navigation Bar</span>
-                            </label>
-                            <div class="fieldDescription">Enable the custom Moonfin navigation bar by default.</div>
+                        <div style="background-color: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107; border-radius: 4px; padding: 0.8em 1.2em; margin-bottom: 1.2em; font-size: 0.9em;">
+                            <strong>Important:</strong> New nullable settings use <strong>Not set / Yes / No</strong> style inputs.
+                            <strong>Not set</strong> means "do not force this value" so users keep their own choice.
                         </div>
+
+                        <h4 style="margin: 1em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Appearance</h4>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultVisualTheme">App Theme</label>
+                            <select id="DefaultVisualTheme" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="moonfin">Moonfin</option>
+                                <option value="neonPulse">Neon Pulse</option>
+                            </select>
+                            <div class="fieldDescription">Default overall app style. Keep Not set to let users choose.</div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultFocusColor">Focus Highlight Color</label>
+                            <select id="DefaultFocusColor" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="white">White</option>
+                                <option value="black">Black</option>
+                                <option value="gray">Gray</option>
+                                <option value="darkBlue">Dark Blue</option>
+                                <option value="purple">Purple</option>
+                                <option value="teal">Teal</option>
+                                <option value="navy">Navy</option>
+                                <option value="charcoal">Charcoal</option>
+                                <option value="brown">Brown</option>
+                                <option value="darkRed">Dark Red</option>
+                                <option value="darkGreen">Dark Green</option>
+                                <option value="slate">Slate</option>
+                                <option value="indigo">Indigo</option>
+                                <option value="moonfinCyan">Moonfin Cyan</option>
+                                <option value="neonPulseMagenta">Neon Pulse Magenta</option>
+                            </select>
+                            <div class="fieldDescription">Color used for focused cards and controls.</div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultWatchedIndicator">Watched Indicator</label>
+                            <select id="DefaultWatchedIndicator" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="always">Always</option>
+                                <option value="hideUnwatched">Hide Unwatched</option>
+                                <option value="episodesOnly">Episodes Only</option>
+                                <option value="never">Never</option>
+                            </select>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultCardFocusExpansion">Scale Focused Cards</label>
+                            <select id="DefaultCardFocusExpansion" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultScreensaverMode">Screensaver Mode</label>
+                            <select id="DefaultScreensaverMode" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="off">Off</option>
+                                <option value="logo">Logo</option>
+                                <option value="library">Library</option>
+                            </select>
+                        </div>
+                        <h4 style="margin: 1em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Navigation</h4>
                         <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="DefaultNavbarPosition">Default Navbar Position</label>
                             <select id="DefaultNavbarPosition" is="emby-select">
@@ -119,13 +296,33 @@
                                 <option value="left">Left (Sidebar)</option>
                             </select>
                         </div>
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input type="checkbox" id="DefaultMediaBarEnabled" is="emby-checkbox" />
-                                <span>Media Bar</span>
-                            </label>
-                            <div class="fieldDescription">Enable the featured media carousel on the home page by default.</div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultNavbarColor">Navigation Bar Accent Color</label>
+                            <select id="DefaultNavbarColor" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="white">White</option>
+                                <option value="black">Black</option>
+                                <option value="gray">Gray</option>
+                                <option value="darkBlue">Dark Blue</option>
+                                <option value="purple">Purple</option>
+                                <option value="teal">Teal</option>
+                                <option value="navy">Navy</option>
+                                <option value="charcoal">Charcoal</option>
+                                <option value="brown">Brown</option>
+                                <option value="darkRed">Dark Red</option>
+                                <option value="darkGreen">Dark Green</option>
+                                <option value="slate">Slate</option>
+                                <option value="indigo">Indigo</option>
+                                <option value="moonfinCyan">Moonfin Cyan</option>
+                                <option value="neonPulseMagenta">Neon Pulse Magenta</option>
+                            </select>
                         </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultNavbarOpacity">Navigation Bar Opacity (0-100)</label>
+                            <input type="number" id="DefaultNavbarOpacity" is="emby-input" min="0" max="100" step="1" placeholder="Not set" />
+                        </div>
+
+                        <h4 style="margin: 1em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Media Bar</h4>
                         <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="DefaultMediaBarSourceType">Media Bar Content Source</label>
                             <select id="DefaultMediaBarSourceType" is="emby-select">
@@ -134,6 +331,24 @@
                                 <option value="collection">Collections / Playlists</option>
                             </select>
                             <div class="fieldDescription">Default content source for the media bar. Users can override this.</div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultMediaBarMode">Media Bar Style</label>
+                            <select id="DefaultMediaBarMode" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="moonfin">Moonfin</option>
+                                <option value="makd">MA KD</option>
+                                <option value="off">Off</option>
+                            </select>
+                            <div class="fieldDescription">Visual style/mode for the media bar.</div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultMediaBarTrailerAudio">Trailer Audio In Media Bar</label>
+                            <select id="DefaultMediaBarTrailerAudio" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
                         </div>
                         <div id="DefaultCollectionPickerSection" style="display:none;">
                             <div class="inputContainer">
@@ -154,22 +369,133 @@
                             <div class="fieldDescription" style="margin-bottom:0.5em;">Select genres to exclude from the media bar by default. Items with any of these genres will not appear. Users can override this.</div>
                             <div id="DefaultGenrePicker" style="max-height:200px;overflow-y:auto;border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:4px;"></div>
                         </div>
+                        <h4 style="margin: 1em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Home Screen</h4>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultHomeRowsStyle">Home Rows Style</label>
+                            <select id="DefaultHomeRowsStyle" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="v1">Classic</option>
+                                <option value="v2">Modern</option>
+                            </select>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultHomeImageTypeContinueWatching">Continue Watching Image Type</label>
+                            <select id="DefaultHomeImageTypeContinueWatching" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="Primary">Poster</option>
+                                <option value="Backdrop">Backdrop</option>
+                                <option value="Thumb">Thumbnail</option>
+                                <option value="Banner">Banner</option>
+                            </select>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultPosterSize">Card Size</label>
+                            <select id="DefaultPosterSize" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="small">Small</option>
+                                <option value="medium">Medium</option>
+                                <option value="large">Large</option>
+                                <option value="extraLarge">Extra Large</option>
+                            </select>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultDisplayFavoritesRows">Show Favorites Rows</label>
+                            <select id="DefaultDisplayFavoritesRows" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultDisplayCollectionsRows">Show Collections Rows</label>
+                            <select id="DefaultDisplayCollectionsRows" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultDisplayGenresRows">Show Genres Rows</label>
+                            <select id="DefaultDisplayGenresRows" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultFavoritesRowSortBy">Favorites Row Sort</label>
+                            <select id="DefaultFavoritesRowSortBy" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="name">Name</option>
+                                <option value="dateAdded">Date Added</option>
+                                <option value="premiereDate">Premiere Date</option>
+                                <option value="rating">Rating</option>
+                                <option value="runtime">Runtime</option>
+                                <option value="random">Random</option>
+                                <option value="criticRating">Critic Rating</option>
+                                <option value="communityRating">Community Rating</option>
+                            </select>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultCollectionsRowSortBy">Collections Row Sort</label>
+                            <select id="DefaultCollectionsRowSortBy" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="name">Name</option>
+                                <option value="dateAdded">Date Added</option>
+                                <option value="premiereDate">Premiere Date</option>
+                                <option value="rating">Rating</option>
+                                <option value="runtime">Runtime</option>
+                                <option value="random">Random</option>
+                                <option value="criticRating">Critic Rating</option>
+                                <option value="communityRating">Community Rating</option>
+                            </select>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultGenresRowSortBy">Genres Row Sort</label>
+                            <select id="DefaultGenresRowSortBy" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="name">Name</option>
+                                <option value="dateAdded">Date Added</option>
+                                <option value="premiereDate">Premiere Date</option>
+                                <option value="rating">Rating</option>
+                                <option value="runtime">Runtime</option>
+                                <option value="random">Random</option>
+                                <option value="criticRating">Critic Rating</option>
+                                <option value="communityRating">Community Rating</option>
+                            </select>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultGenresRowItemFilter">Genres Row Item Filter</label>
+                            <select id="DefaultGenresRowItemFilter" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="movies">Movies</option>
+                                <option value="series">Series</option>
+                                <option value="both">Both</option>
+                            </select>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultHomeImageUseSeriesImage">Series Thumbnails</label>
+                            <select id="DefaultHomeImageUseSeriesImage" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                            <div class="fieldDescription">Use series thumbnails on home rows by default.</div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused">Default Home Row Order</label>
+                            <div id="DefaultHomeRowOrder" style="border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:4px;"></div>
+                            <div class="fieldDescription">Enable rows and reorder with arrows.</div>
+                        </div>
                         <div class="checkboxContainer checkboxContainer-withDescription">
                             <label class="emby-checkbox-label">
-                                <input type="checkbox" id="DefaultDetailsPageEnabled" is="emby-checkbox" />
-                                <span>Details Page</span>
+                                <input type="checkbox" id="DefaultMergeContinueWatchingNextUp" is="emby-checkbox" />
+                                <span>Merge Continue Watching &amp; Next Up</span>
                             </label>
-                            <div class="fieldDescription">Use the custom Moonfin details page by default.</div>
+                            <div class="fieldDescription">Combine Continue Watching and Next Up into a single home row by default.</div>
                         </div>
 
                         <h4 style="margin: 1em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Toolbar Buttons</h4>
-                        <div class="checkboxContainer checkboxContainer-withDescription">
-                            <label class="emby-checkbox-label">
-                                <input type="checkbox" id="DefaultShowClock" is="emby-checkbox" />
-                                <span>Clock</span>
-                            </label>
-                            <div class="fieldDescription">Show clock in navigation bar by default.</div>
-                        </div>
                         <div class="checkboxContainer checkboxContainer-withDescription">
                             <label class="emby-checkbox-label">
                                 <input type="checkbox" id="DefaultShowShuffleButton" is="emby-checkbox" />
@@ -207,6 +533,24 @@
                             </label>
                         </div>
 
+                        <h4 style="margin: 1em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Previews</h4>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultEpisodePreviewEnabled">Episode Previews On Hover</label>
+                            <select id="DefaultEpisodePreviewEnabled" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultPreviewAudioEnabled">Preview Audio</label>
+                            <select id="DefaultPreviewAudioEnabled" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+
                         <h4 style="margin: 1em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Integrations</h4>
                         <div class="checkboxContainer checkboxContainer-withDescription">
                             <label class="emby-checkbox-label">
@@ -222,6 +566,87 @@
                             </label>
                             <div class="fieldDescription">Enable TMDB episode ratings by default (requires server-wide or user API key).</div>
                         </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultMdblistShowRatingBadges">Show MDBList Rating Badges</label>
+                            <select id="DefaultMdblistShowRatingBadges" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused">Default Rating Sources &amp; Order</label>
+                            <div class="fieldDescription" style="margin-bottom:0.5em;">Check which ratings to display and drag or use the arrows to set their order. Leave all unchecked to use each user's own choice.</div>
+                            <div id="DefaultMdblistRatingSourcesList" style="border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:4px;"></div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultJellyseerrBlockNsfw">Block NSFW In Seerr</label>
+                            <select id="DefaultJellyseerrBlockNsfw" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h3 class="sectionTitle">Uploaded Themes</h3>
+                        <div class="fieldDescription" style="margin-bottom: 0.8em;">
+                            Upload theme editor JSON exports so Moonfin clients can download and apply them.
+                            Uploaded themes are synced to Mobile-Desktop, tvOS, and Smart-TV through plugin sync.
+                        </div>
+                        <div style="background-color: rgba(0, 164, 220, 0.1); border-left: 4px solid #00a4dc; border-radius: 4px; padding: 0.8em 1.2em; margin-bottom: 1em; font-size: 0.9em;">
+                            <strong>Validation:</strong> The server validates theme schema and field ranges on upload.
+                            Fix any listed field-path errors in the theme editor, then upload again.
+                        </div>
+                        <input type="file" id="AdminThemeFileInput" accept="application/json,.json" style="display:none;" />
+                        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.6em; margin-bottom:0.8em;">
+                            <button is="emby-button" type="button" id="AdminThemeChooseBtn" class="raised">
+                                <span>Choose JSON File</span>
+                            </button>
+                            <span id="AdminThemeChosenFile" style="font-size:0.9em; color:rgba(255,255,255,0.75);">No file selected</span>
+                            <button is="emby-button" type="button" id="AdminThemeUploadBtn" class="raised" disabled>
+                                <span>Upload Theme</span>
+                            </button>
+                        </div>
+                        <div id="AdminThemeUploadResult" class="fieldDescription" style="display:none; margin-bottom:0.9em;"></div>
+                        <div class="inputContainer" style="margin-bottom:0;">
+                            <label class="inputLabel inputLabelUnfocused">Uploaded Theme Catalog</label>
+                            <div id="AdminThemesList" style="max-height:260px;overflow-y:auto;border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:6px;"></div>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h3 class="sectionTitle">Push Defaults To Existing Users</h3>
+                        <div class="fieldDescription" style="margin-bottom: 0.8em;">
+                            Apply the configured defaults above to every existing user now.
+                            Only fields that are set (not "Not set") will be merged into user global settings.
+                            Save your default settings first if you made changes.
+                        </div>
+                        <div style="background-color: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107; border-radius: 4px; padding: 0.8em 1.2em; margin-bottom: 1em; font-size: 0.9em;">
+                            <strong>Warning:</strong> This action updates existing user profiles immediately for all set fields.
+                            Device-specific profile overrides are not touched.
+                        </div>
+                        <button is="emby-button" type="button" id="PushDefaultsBtn" class="raised">
+                            <span>Apply Defaults To All Users Now</span>
+                        </button>
+                        <div id="PushDefaultsResult" class="fieldDescription" style="display:none; margin-top:0.8em;"></div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h3 class="sectionTitle">Broadcast Message</h3>
+                        <div class="fieldDescription" style="margin-bottom: 0.8em;">
+                            Send a live message to all currently connected Moonfin clients.
+                            This message is not saved and only appears for users with an active connection.
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="BroadcastMessageText">Message</label>
+                            <input type="text" id="BroadcastMessageText" is="emby-input" maxlength="500" placeholder="Type a message to display" />
+                        </div>
+                        <button is="emby-button" type="button" id="BroadcastMessageBtn" class="raised">
+                            <span>Send Message</span>
+                        </button>
+                        <div id="BroadcastMessageResult" class="fieldDescription" style="display:none; margin-top:0.8em;"></div>
                     </div>
 
                     <div class="verticalSection">
@@ -229,7 +654,10 @@
                         <div class="fieldDescription" style="margin-bottom: 1em;">
                             <p>Moonfin uses the
                                 <a href="https://github.com/IAmParadox27/jellyfin-plugin-file-transformation" target="_blank">File Transformation</a>
-                                plugin to inject its web UI.
+                                plugin to inject a header button in Jellyfin Web.
+                            </p>
+                            <p style="margin-top: 0.5em;">
+                                <strong>What it does:</strong> the injected button opens the Flutter app at <code>/Moonfin/Web/</code>.
                             </p>
                             <p style="margin-top: 0.5em;">
                                 <strong>Setup:</strong>
@@ -258,12 +686,754 @@
         <script type="text/javascript">
             function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
+            function setCollapsibleOpen(container, trigger, content, chevron, isOpen) {
+                container.classList.toggle('is-open', !!isOpen);
+                trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                if (content) {
+                    content.style.display = isOpen ? '' : 'none';
+                }
+                if (chevron) {
+                    chevron.style.transform = isOpen ? 'rotate(90deg)' : 'rotate(0deg)';
+                }
+            }
+
+            function findDirectSectionTitle(section) {
+                for (var i = 0; i < section.children.length; i++) {
+                    var child = section.children[i];
+                    if (child.classList && child.classList.contains('sectionTitle')) {
+                        return child;
+                    }
+                }
+                return null;
+            }
+
+            function makeCollapsibleSection(section, heading, openByDefault) {
+                if (!section || !heading || section.dataset.collapsibleInit === 'true') {
+                    return null;
+                }
+
+                section.dataset.collapsibleInit = 'true';
+                section.classList.add('collapsibleSection');
+                section.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+                section.style.borderRadius = '8px';
+                section.style.background = 'rgba(255, 255, 255, 0.02)';
+                section.style.overflow = 'hidden';
+
+                var titleText = (heading.textContent || '').trim();
+                var trigger = document.createElement('button');
+                trigger.type = 'button';
+                trigger.className = 'collapsibleSectionTrigger';
+                trigger.style.cssText = [
+                    'width:100%',
+                    'display:flex',
+                    'align-items:center',
+                    'justify-content:space-between',
+                    'gap:1em',
+                    'padding:0.85em 1em',
+                    'border:0',
+                    'background:transparent',
+                    'color:inherit',
+                    'cursor:pointer',
+                    'text-align:left',
+                    'font-size:1em',
+                    'font-weight:600'
+                ].join(';');
+
+                var titleSpan = document.createElement('span');
+                titleSpan.textContent = titleText;
+                var chevron = document.createElement('span');
+                chevron.className = 'collapsibleSectionChevron';
+                chevron.setAttribute('aria-hidden', 'true');
+                chevron.textContent = '\u25B8';
+                chevron.style.transition = 'transform 0.2s ease';
+                chevron.style.flexShrink = '0';
+                chevron.style.color = 'rgba(255, 255, 255, 0.75)';
+                trigger.appendChild(titleSpan);
+                trigger.appendChild(chevron);
+
+                var content = document.createElement('div');
+                content.className = 'collapsibleSectionContent';
+                content.style.padding = '0 1em 1em';
+
+                var current = heading.nextSibling;
+                while (current) {
+                    var next = current.nextSibling;
+                    content.appendChild(current);
+                    current = next;
+                }
+
+                heading.remove();
+                section.insertBefore(trigger, section.firstChild);
+                section.appendChild(content);
+
+                trigger.addEventListener('click', function() {
+                    setCollapsibleOpen(section, trigger, content, chevron, !section.classList.contains('is-open'));
+                });
+
+                setCollapsibleOpen(section, trigger, content, chevron, !!openByDefault);
+                return content;
+            }
+
+            function makeDefaultSettingSubsections(defaultsContent) {
+                if (!defaultsContent || defaultsContent.dataset.subsectionsInit === 'true') {
+                    return;
+                }
+
+                defaultsContent.dataset.subsectionsInit = 'true';
+                var headings = Array.prototype.slice.call(defaultsContent.querySelectorAll('h4'));
+                if (!headings.length) {
+                    return;
+                }
+
+                var openedOne = false;
+                headings.forEach(function(heading) {
+                    if (!heading || !heading.parentNode) {
+                        return;
+                    }
+
+                    var subsection = document.createElement('div');
+                    subsection.className = 'collapsibleSubsection';
+                    subsection.style.marginTop = '0.75em';
+                    subsection.style.border = '1px solid rgba(255, 255, 255, 0.06)';
+                    subsection.style.borderRadius = '6px';
+                    subsection.style.background = 'rgba(255, 255, 255, 0.015)';
+                    subsection.style.overflow = 'hidden';
+
+                    var trigger = document.createElement('button');
+                    trigger.type = 'button';
+                    trigger.className = 'collapsibleSubsectionTrigger';
+                    trigger.style.cssText = [
+                        'width:100%',
+                        'display:flex',
+                        'align-items:center',
+                        'justify-content:space-between',
+                        'gap:1em',
+                        'padding:0.7em 0.9em',
+                        'border:0',
+                        'background:transparent',
+                        'color:#00a4dc',
+                        'cursor:pointer',
+                        'text-align:left',
+                        'font-size:0.95em',
+                        'font-weight:600'
+                    ].join(';');
+
+                    var triggerTitle = document.createElement('span');
+                    triggerTitle.textContent = (heading.textContent || '').trim();
+                    var chevron = document.createElement('span');
+                    chevron.className = 'collapsibleSubsectionChevron';
+                    chevron.setAttribute('aria-hidden', 'true');
+                    chevron.textContent = '\u25B8';
+                    chevron.style.transition = 'transform 0.2s ease';
+                    chevron.style.flexShrink = '0';
+                    chevron.style.color = 'rgba(255, 255, 255, 0.75)';
+                    trigger.appendChild(triggerTitle);
+                    trigger.appendChild(chevron);
+
+                    var content = document.createElement('div');
+                    content.className = 'collapsibleSubsectionContent';
+                    content.style.padding = '0 0.9em 0.9em';
+
+                    defaultsContent.insertBefore(subsection, heading);
+                    subsection.appendChild(trigger);
+                    subsection.appendChild(content);
+
+                    var node = heading.nextSibling;
+                    while (node && !(node.nodeType === 1 && node.tagName && node.tagName.toUpperCase() === 'H4')) {
+                        var nextNode = node.nextSibling;
+                        content.appendChild(node);
+                        node = nextNode;
+                    }
+
+                    heading.remove();
+
+                    trigger.addEventListener('click', function() {
+                        setCollapsibleOpen(subsection, trigger, content, chevron, !subsection.classList.contains('is-open'));
+                    });
+
+                    var shouldOpen = !openedOne;
+                    if (shouldOpen) {
+                        openedOne = true;
+                    }
+                    setCollapsibleOpen(subsection, trigger, content, chevron, shouldOpen);
+                });
+            }
+
+            function findSectionByTitle(form, title) {
+                if (!form) {
+                    return null;
+                }
+
+                for (var i = 0; i < form.children.length; i++) {
+                    var section = form.children[i];
+                    if (!section.classList || !section.classList.contains('verticalSection')) {
+                        continue;
+                    }
+
+                    var heading = findDirectSectionTitle(section);
+                    var headingText = heading ? (heading.textContent || '').trim() : '';
+                    if (heading && headingText === title) {
+                        return { section: section, heading: heading };
+                    }
+                }
+
+                return null;
+            }
+
+            function initializeCollapsibleCategories() {
+                var page = document.querySelector('#MoonfinConfigPage');
+                if (!page || page.dataset.categoriesInitialized === 'true') {
+                    return;
+                }
+
+                page.dataset.categoriesInitialized = 'true';
+                var form = page.querySelector('#MoonfinConfigForm');
+                var defaultSettingsSection = findSectionByTitle(form, 'Default User Settings');
+                if (defaultSettingsSection) {
+                    var defaultsContent = makeCollapsibleSection(
+                        defaultSettingsSection.section,
+                        defaultSettingsSection.heading,
+                        true
+                    );
+                    makeDefaultSettingSubsections(defaultsContent);
+                }
+
+                var pushDefaultsSection = findSectionByTitle(form, 'Push Defaults To Existing Users');
+                if (pushDefaultsSection) {
+                    makeCollapsibleSection(
+                        pushDefaultsSection.section,
+                        pushDefaultsSection.heading,
+                        false
+                    );
+                }
+            }
+
             var MoonfinConfig = {
                 pluginUniqueId: '8c5d0e91-4f2a-4b6d-9e3f-1a7c8d9e0f2b'
             };
 
+            function setSelectValue(selector, value, dynamicLabelPrefix) {
+                var select = document.querySelector(selector);
+                if (!select) return;
+
+                if (value == null || value === '') {
+                    select.value = '';
+                    return;
+                }
+
+                var normalized = String(value);
+                var hasOption = false;
+                for (var i = 0; i < select.options.length; i++) {
+                    if (select.options[i].value === normalized) {
+                        hasOption = true;
+                        break;
+                    }
+                }
+
+                if (!hasOption) {
+                    var option = document.createElement('option');
+                    option.value = normalized;
+                    option.textContent = (dynamicLabelPrefix || 'Current value') + ': ' + normalized;
+                    option.setAttribute('data-dynamic-option', 'true');
+                    select.appendChild(option);
+                }
+
+                select.value = normalized;
+            }
+
+            function setNullableBoolSelect(selector, value) {
+                var select = document.querySelector(selector);
+                if (!select) return;
+
+                if (value === true) {
+                    select.value = 'true';
+                    return;
+                }
+
+                if (value === false) {
+                    select.value = 'false';
+                    return;
+                }
+
+                select.value = '';
+            }
+
+            function getNullableBoolSelect(selector) {
+                var select = document.querySelector(selector);
+                if (!select) return null;
+
+                if (select.value === 'true') return true;
+                if (select.value === 'false') return false;
+                return null;
+            }
+
+            function setNullableIntInput(selector, value) {
+                var input = document.querySelector(selector);
+                if (!input) return;
+                input.value = value == null ? '' : String(value);
+            }
+
+            function getNullableIntInput(selector) {
+                var input = document.querySelector(selector);
+                if (!input) return null;
+
+                var raw = (input.value || '').trim();
+                if (raw === '') {
+                    return null;
+                }
+
+                var parsed = parseInt(raw, 10);
+                return Number.isNaN(parsed) ? null : parsed;
+            }
+
+            var RATING_SOURCES = [
+                { id: 'tomatoes',       label: 'Rotten Tomatoes' },
+                { id: 'rtAudience',     label: 'RT Audience Score' },
+                { id: 'imdb',           label: 'IMDb' },
+                { id: 'tmdb',           label: 'TMDB' },
+                { id: 'metacritic',     label: 'Metacritic' },
+                { id: 'metacriticUser', label: 'Metacritic User' },
+                { id: 'stars',          label: 'Stars' },
+                { id: 'trakt',          label: 'Trakt' },
+                { id: 'letterboxd',     label: 'Letterboxd' },
+                { id: 'myAnimeList',    label: 'MyAnimeList' },
+                { id: 'aniList',        label: 'AniList' },
+            ];
+
+            var HOME_ROW_DEFINITIONS = [
+                { id: 'resume', label: 'Continue Watching' },
+                { id: 'nextup', label: 'Next Up' },
+                { id: 'latestmedia', label: 'Latest Media' },
+                { id: 'collections', label: 'Collections' },
+                { id: 'smalllibrarytiles', label: 'My Media' }
+            ];
+
+            function loadRatingSourcesPicker(selectedIds) {
+                var container = document.querySelector('#DefaultMdblistRatingSourcesList');
+                if (!container) return;
+                var selectedSet = {};
+                var ordered = [];
+                if (selectedIds && selectedIds.length > 0) {
+                    selectedIds.forEach(function(id) {
+                        var src = RATING_SOURCES.find(function(s) { return s.id === id; });
+                        if (src) { ordered.push({ id: src.id, label: src.label, checked: true }); selectedSet[id] = true; }
+                    });
+                }
+                RATING_SOURCES.forEach(function(src) {
+                    if (!selectedSet[src.id]) { ordered.push({ id: src.id, label: src.label, checked: false }); }
+                });
+                container.innerHTML = '';
+                ordered.forEach(function(item) {
+                    var row = document.createElement('div');
+                    row.className = 'mdblistRatingItem';
+                    row.dataset.id = item.id;
+                    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:4px;margin-bottom:2px;background:rgba(255,255,255,0.03);';
+                    row.innerHTML =
+                        '<input type="checkbox"' + (item.checked ? ' checked' : '') + ' style="accent-color:#00a4dc;width:16px;height:16px;flex-shrink:0;">'
+                        + '<span style="flex:1;font-size:0.9em;color:rgba(255,255,255,0.9);">' + esc(item.label) + '</span>'
+                        + '<button type="button" class="ratingMoveBtn" data-dir="up" style="background:none;border:1px solid rgba(255,255,255,0.2);border-radius:3px;color:rgba(255,255,255,0.7);padding:1px 6px;cursor:pointer;font-size:0.85em;">&#x2191;</button>'
+                        + '<button type="button" class="ratingMoveBtn" data-dir="down" style="background:none;border:1px solid rgba(255,255,255,0.2);border-radius:3px;color:rgba(255,255,255,0.7);padding:1px 6px;cursor:pointer;font-size:0.85em;">&#x2193;</button>';
+                    container.appendChild(row);
+                });
+                if (!container.dataset.hasListener) {
+                    container.dataset.hasListener = 'true';
+                    container.addEventListener('click', function(e) {
+                        var btn = e.target.closest('.ratingMoveBtn');
+                        if (!btn) return;
+                        var row = btn.closest('.mdblistRatingItem');
+                        if (!row) return;
+                        if (btn.dataset.dir === 'up' && row.previousElementSibling) {
+                            container.insertBefore(row, row.previousElementSibling);
+                        } else if (btn.dataset.dir === 'down' && row.nextElementSibling) {
+                            container.insertBefore(row.nextElementSibling, row);
+                        }
+                    });
+                }
+            }
+
+            function getRatingSourcesValue() {
+                var items = document.querySelectorAll('#DefaultMdblistRatingSourcesList .mdblistRatingItem');
+                var result = [];
+                items.forEach(function(item) {
+                    var cb = item.querySelector('input[type=checkbox]');
+                    if (cb && cb.checked) { result.push(item.dataset.id); }
+                });
+                return result.length > 0 ? result : null;
+            }
+
+            function loadHomeRowOrderEditor(savedIds) {
+                var container = document.querySelector('#DefaultHomeRowOrder');
+                if (!container) return;
+
+                var selectedSet = {};
+                var ordered = [];
+
+                if (savedIds && savedIds.length > 0) {
+                    savedIds.forEach(function(id) {
+                        var row = HOME_ROW_DEFINITIONS.find(function(r) { return r.id === id; });
+                        if (row) {
+                            ordered.push({ id: row.id, label: row.label, checked: true });
+                            selectedSet[id] = true;
+                        }
+                    });
+                }
+
+                HOME_ROW_DEFINITIONS.forEach(function(row) {
+                    if (!selectedSet[row.id]) {
+                        ordered.push({ id: row.id, label: row.label, checked: false });
+                    }
+                });
+
+                container.innerHTML = '';
+                ordered.forEach(function(item) {
+                    var row = document.createElement('div');
+                    row.className = 'homeRowOrderItem';
+                    row.dataset.id = item.id;
+                    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:4px;margin-bottom:2px;background:rgba(255,255,255,0.03);';
+                    row.innerHTML =
+                        '<input type="checkbox"' + (item.checked ? ' checked' : '') + ' style="accent-color:#00a4dc;width:16px;height:16px;flex-shrink:0;">'
+                        + '<span style="flex:1;font-size:0.9em;color:rgba(255,255,255,0.9);">' + esc(item.label) + '</span>'
+                        + '<button type="button" class="homeRowMoveBtn" data-dir="up" style="background:none;border:1px solid rgba(255,255,255,0.2);border-radius:3px;color:rgba(255,255,255,0.7);padding:1px 6px;cursor:pointer;font-size:0.85em;">&#x2191;</button>'
+                        + '<button type="button" class="homeRowMoveBtn" data-dir="down" style="background:none;border:1px solid rgba(255,255,255,0.2);border-radius:3px;color:rgba(255,255,255,0.7);padding:1px 6px;cursor:pointer;font-size:0.85em;">&#x2193;</button>';
+                    container.appendChild(row);
+                });
+
+                if (!container.dataset.hasListener) {
+                    container.dataset.hasListener = 'true';
+                    container.addEventListener('click', function(e) {
+                        var btn = e.target.closest('.homeRowMoveBtn');
+                        if (!btn) return;
+                        var row = btn.closest('.homeRowOrderItem');
+                        if (!row) return;
+                        if (btn.dataset.dir === 'up' && row.previousElementSibling) {
+                            container.insertBefore(row, row.previousElementSibling);
+                        } else if (btn.dataset.dir === 'down' && row.nextElementSibling) {
+                            container.insertBefore(row.nextElementSibling, row);
+                        }
+                    });
+                }
+            }
+
+            function getHomeRowOrderValue() {
+                var items = document.querySelectorAll('#DefaultHomeRowOrder .homeRowOrderItem');
+                var result = [];
+                items.forEach(function(item) {
+                    var cb = item.querySelector('input[type=checkbox]');
+                    if (cb && cb.checked) {
+                        result.push(item.dataset.id);
+                    }
+                });
+                return result.length > 0 ? result : null;
+            }
+
+            function getMoonfinAuthHeaders() {
+                var token = ApiClient.accessToken ? ApiClient.accessToken() : '';
+                var headers = { 'Content-Type': 'application/json' };
+                if (token) {
+                    headers.Authorization = 'MediaBrowser Token="' + token + '"';
+                }
+                return headers;
+            }
+
+            function parseJsonResponse(response) {
+                return response.text().then(function(text) {
+                    var payload = {};
+                    try {
+                        payload = text ? JSON.parse(text) : {};
+                    } catch (e) {
+                        payload = {};
+                    }
+
+                    if (!response.ok) {
+                        var error = new Error(payload.error || payload.Error || ('Request failed (' + response.status + ')'));
+                        error.payload = payload;
+                        throw error;
+                    }
+
+                    return payload;
+                });
+            }
+
+            function formatThemeSize(bytes) {
+                var value = Number(bytes || 0);
+                if (!Number.isFinite(value) || value < 1024) {
+                    return Math.max(0, Math.round(value)) + ' B';
+                }
+
+                if (value < (1024 * 1024)) {
+                    return (value / 1024).toFixed(1) + ' KB';
+                }
+
+                return (value / (1024 * 1024)).toFixed(2) + ' MB';
+            }
+
+            function formatThemeUploadedAt(value) {
+                if (!value) {
+                    return 'Unknown date';
+                }
+
+                var date = new Date(value);
+                if (Number.isNaN(date.getTime())) {
+                    return 'Unknown date';
+                }
+
+                return date.toLocaleString();
+            }
+
+            function setThemeUploadResult(message, color) {
+                var result = document.querySelector('#AdminThemeUploadResult');
+                if (!result) {
+                    return;
+                }
+
+                if (!message) {
+                    result.style.display = 'none';
+                    result.textContent = '';
+                    return;
+                }
+
+                result.style.display = '';
+                result.style.color = color || 'rgba(255,255,255,0.85)';
+                result.textContent = message;
+            }
+
+            function setSelectedThemeFileLabel(file) {
+                var label = document.querySelector('#AdminThemeChosenFile');
+                if (!label) {
+                    return;
+                }
+
+                if (!file) {
+                    label.textContent = 'No file selected';
+                    return;
+                }
+
+                label.textContent = file.name + ' (' + formatThemeSize(file.size) + ')';
+            }
+
+            function getAdminThemesFromPayload(payload) {
+                if (!payload) {
+                    return [];
+                }
+
+                if (Array.isArray(payload.items)) {
+                    return payload.items;
+                }
+
+                if (Array.isArray(payload.Items)) {
+                    return payload.Items;
+                }
+
+                return [];
+            }
+
+            function renderAdminThemesList(items) {
+                var container = document.querySelector('#AdminThemesList');
+                if (!container) {
+                    return;
+                }
+
+                if (!items || items.length === 0) {
+                    container.innerHTML = '<div style="padding:8px;color:rgba(255,255,255,0.55);font-size:0.9em;">No uploaded themes yet.</div>';
+                    return;
+                }
+
+                var html = '';
+                items.forEach(function(item) {
+                    var id = item.id || item.Id || '';
+                    var displayName = item.displayName || item.DisplayName || id;
+                    var sizeBytes = item.sizeBytes != null ? item.sizeBytes : item.SizeBytes;
+                    var uploadedAt = item.uploadedAtUtc || item.UploadedAtUtc;
+                    var checksum = item.checksumSha256 || item.ChecksumSha256 || '';
+
+                    html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:8px;border:1px solid rgba(255,255,255,0.08);border-radius:4px;margin-bottom:6px;background:rgba(255,255,255,0.02);">'
+                        + '<div style="flex:1;min-width:0;">'
+                        + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+                        + '<strong style="font-size:0.95em;color:rgba(255,255,255,0.95);">' + esc(displayName) + '</strong>'
+                        + '</div>'
+                        + '<div style="font-size:0.8em;color:rgba(255,255,255,0.65);margin-top:4px;">ID: <code>' + esc(id) + '</code></div>'
+                        + '<div style="font-size:0.78em;color:rgba(255,255,255,0.52);margin-top:3px;">'
+                        + 'Uploaded: ' + esc(formatThemeUploadedAt(uploadedAt))
+                        + ' • Size: ' + esc(formatThemeSize(sizeBytes))
+                        + (checksum ? ' • SHA256: ' + esc(checksum.slice(0, 12)) + '…' : '')
+                        + '</div>'
+                        + '</div>'
+                        + '<button type="button" class="adminThemeDeleteBtn" data-theme-id="' + esc(id) + '" title="Delete theme" style="background:none;border:1px solid rgba(239,68,68,0.6);color:#ef4444;border-radius:4px;padding:2px 8px;cursor:pointer;line-height:1.1;">✕</button>'
+                        + '</div>';
+                });
+
+                container.innerHTML = html;
+            }
+
+            function loadAdminThemesList() {
+                var container = document.querySelector('#AdminThemesList');
+                if (!container) {
+                    return;
+                }
+
+                var serverUrl = ApiClient.serverAddress ? ApiClient.serverAddress() : '';
+                container.innerHTML = '<div style="padding:8px;color:rgba(255,255,255,0.55);font-size:0.9em;">Loading uploaded themes...</div>';
+
+                fetch(serverUrl + '/Moonfin/Admin/Themes', {
+                    method: 'GET',
+                    headers: getMoonfinAuthHeaders()
+                })
+                    .then(parseJsonResponse)
+                    .then(function(payload) {
+                        renderAdminThemesList(getAdminThemesFromPayload(payload));
+                    })
+                    .catch(function(error) {
+                        container.innerHTML = '<div style="padding:8px;color:#d9534f;font-size:0.9em;">'
+                            + esc((error && error.message) ? error.message : 'Failed to load uploaded themes.') + '</div>';
+                    });
+            }
+
+            function clearSelectedThemeFile() {
+                var fileInput = document.querySelector('#AdminThemeFileInput');
+                var uploadButton = document.querySelector('#AdminThemeUploadBtn');
+                if (fileInput) {
+                    fileInput.value = '';
+                }
+                if (uploadButton) {
+                    uploadButton.disabled = true;
+                }
+                setSelectedThemeFileLabel(null);
+            }
+
+            function uploadSelectedThemeFile() {
+                var fileInput = document.querySelector('#AdminThemeFileInput');
+                var uploadButton = document.querySelector('#AdminThemeUploadBtn');
+                var file = fileInput && fileInput.files ? fileInput.files[0] : null;
+
+                if (!file) {
+                    setThemeUploadResult('Select a JSON file first.', '#d9534f');
+                    return;
+                }
+
+                uploadButton.disabled = true;
+                setThemeUploadResult('', '');
+
+                file.text()
+                    .then(function(raw) {
+                        var payload;
+                        try {
+                            payload = JSON.parse(raw);
+                        } catch (error) {
+                            throw new Error('Invalid JSON file.');
+                        }
+
+                        if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+                            throw new Error('Theme file must contain a JSON object.');
+                        }
+
+                        var serverUrl = ApiClient.serverAddress ? ApiClient.serverAddress() : '';
+                        return fetch(serverUrl + '/Moonfin/Admin/Themes', {
+                            method: 'POST',
+                            headers: getMoonfinAuthHeaders(),
+                            body: JSON.stringify(payload)
+                        });
+                    })
+                    .then(parseJsonResponse)
+                    .then(function(payload) {
+                        var item = payload.item || payload.Item || {};
+                        var displayName = item.displayName || item.DisplayName || 'Theme';
+                        setThemeUploadResult('Uploaded "' + displayName + '" successfully.', '#52b54b');
+                        clearSelectedThemeFile();
+                        loadAdminThemesList();
+                    })
+                    .catch(function(error) {
+                        var message = (error && error.message) ? error.message : 'Upload failed.';
+                        if (error && error.payload && Array.isArray(error.payload.errors) && error.payload.errors.length > 0) {
+                            message = error.payload.errors.join(' | ');
+                        }
+                        setThemeUploadResult(message, '#d9534f');
+                    })
+                    .finally(function() {
+                        if (uploadButton && !(fileInput && fileInput.files && fileInput.files.length)) {
+                            uploadButton.disabled = true;
+                        }
+                    });
+            }
+
+            function deleteUploadedTheme(themeId) {
+                if (!themeId) {
+                    return;
+                }
+
+                if (!window.confirm('Delete uploaded theme "' + themeId + '" from the plugin?')) {
+                    return;
+                }
+
+                var serverUrl = ApiClient.serverAddress ? ApiClient.serverAddress() : '';
+                setThemeUploadResult('', '');
+
+                fetch(serverUrl + '/Moonfin/Admin/Themes/' + encodeURIComponent(themeId), {
+                    method: 'DELETE',
+                    headers: getMoonfinAuthHeaders()
+                })
+                    .then(parseJsonResponse)
+                    .then(function() {
+                        setThemeUploadResult('Deleted "' + themeId + '".', '#52b54b');
+                        loadAdminThemesList();
+                    })
+                    .catch(function(error) {
+                        setThemeUploadResult((error && error.message) ? error.message : 'Delete failed.', '#d9534f');
+                    });
+            }
+
             document.addEventListener('pageshow', function(e) {
                 if (e.target.id !== 'MoonfinConfigPage') return;
+
+                initializeCollapsibleCategories();
+
+                var themeFileInput = document.querySelector('#AdminThemeFileInput');
+                var themeChooseButton = document.querySelector('#AdminThemeChooseBtn');
+                var themeUploadButton = document.querySelector('#AdminThemeUploadBtn');
+                var themesListContainer = document.querySelector('#AdminThemesList');
+
+                if (themeChooseButton && !themeChooseButton.dataset.bound) {
+                    themeChooseButton.dataset.bound = 'true';
+                    themeChooseButton.addEventListener('click', function() {
+                        if (themeFileInput) {
+                            themeFileInput.click();
+                        }
+                    });
+                }
+
+                if (themeFileInput && !themeFileInput.dataset.bound) {
+                    themeFileInput.dataset.bound = 'true';
+                    themeFileInput.addEventListener('change', function() {
+                        var file = themeFileInput.files && themeFileInput.files.length ? themeFileInput.files[0] : null;
+                        setSelectedThemeFileLabel(file);
+                        if (themeUploadButton) {
+                            themeUploadButton.disabled = !file;
+                        }
+                    });
+                }
+
+                if (themeUploadButton && !themeUploadButton.dataset.bound) {
+                    themeUploadButton.dataset.bound = 'true';
+                    themeUploadButton.addEventListener('click', function() {
+                        uploadSelectedThemeFile();
+                    });
+                }
+
+                if (themesListContainer && !themesListContainer.dataset.bound) {
+                    themesListContainer.dataset.bound = 'true';
+                    themesListContainer.addEventListener('click', function(event) {
+                        var button = event.target.closest('.adminThemeDeleteBtn');
+                        if (!button) {
+                            return;
+                        }
+
+                        var themeId = button.getAttribute('data-theme-id') || '';
+                        deleteUploadedTheme(themeId);
+                    });
+                }
+
+                clearSelectedThemeFile();
+                setThemeUploadResult('', '');
+                loadAdminThemesList();
 
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(MoonfinConfig.pluginUniqueId).then(function(config) {
@@ -273,25 +1443,55 @@
                     document.querySelector('#JellyseerrDisplayName').value = config.JellyseerrDisplayName || '';
                     document.querySelector('#MdblistApiKey').value = config.MdblistApiKey || '';
                     document.querySelector('#TmdbApiKey').value = config.TmdbApiKey || '';
+                    document.querySelector('#WebDefaultServerUrl').value = config.WebDefaultServerUrl || '';
+                    document.querySelector('#WebForcedServerUrl').value = config.WebForcedServerUrl || '';
+                    document.querySelector('#WebEnableWebRtcScan').checked = config.WebEnableWebRtcScan !== false;
 
-                    // Load default user settings
                     var defaults = config.DefaultUserSettings || {};
-                    document.querySelector('#DefaultNavbarEnabled').checked = !!defaults.navbarEnabled;
-                    document.querySelector('#DefaultNavbarPosition').value = defaults.navbarPosition || '';
-                    document.querySelector('#DefaultMediaBarEnabled').checked = !!defaults.mediaBarEnabled;
-                    document.querySelector('#DefaultMediaBarSourceType').value = defaults.mediaBarSourceType || '';
-                    document.querySelector('#DefaultDetailsPageEnabled').checked = !!defaults.detailsPageEnabled;
-                    document.querySelector('#DefaultShowClock').checked = !!defaults.showClock;
+                    setSelectValue('#DefaultVisualTheme', defaults.visualTheme, 'Configured theme');
+                    setSelectValue('#DefaultFocusColor', defaults.focusColor, 'Configured color');
+                    setSelectValue('#DefaultWatchedIndicator', defaults.watchedIndicator, 'Configured mode');
+                    setNullableBoolSelect('#DefaultCardFocusExpansion', defaults.cardFocusExpansion);
+                    setSelectValue('#DefaultScreensaverMode', defaults.screensaverMode, 'Configured mode');
+
+                    setSelectValue('#DefaultNavbarPosition', defaults.navbarPosition, 'Configured position');
+                    setSelectValue('#DefaultNavbarColor', defaults.navbarColor, 'Configured color');
+                    setNullableIntInput('#DefaultNavbarOpacity', defaults.navbarOpacity);
+
+                    setSelectValue('#DefaultMediaBarSourceType', defaults.mediaBarSourceType, 'Configured source');
+                    setSelectValue('#DefaultMediaBarMode', defaults.mediaBarMode, 'Configured mode');
+                    setNullableBoolSelect('#DefaultMediaBarTrailerAudio', defaults.mediaBarTrailerAudio);
+
+                    setSelectValue('#DefaultHomeRowsStyle', defaults.homeRowsStyle, 'Configured style');
+                    setSelectValue('#DefaultHomeImageTypeContinueWatching', defaults.homeImageTypeContinueWatching, 'Configured image type');
+                    setSelectValue('#DefaultPosterSize', defaults.posterSize, 'Configured size');
+                    setNullableBoolSelect('#DefaultDisplayFavoritesRows', defaults.displayFavoritesRows);
+                    setNullableBoolSelect('#DefaultDisplayCollectionsRows', defaults.displayCollectionsRows);
+                    setNullableBoolSelect('#DefaultDisplayGenresRows', defaults.displayGenresRows);
+                    setSelectValue('#DefaultFavoritesRowSortBy', defaults.favoritesRowSortBy, 'Configured sort');
+                    setSelectValue('#DefaultCollectionsRowSortBy', defaults.collectionsRowSortBy, 'Configured sort');
+                    setSelectValue('#DefaultGenresRowSortBy', defaults.genresRowSortBy, 'Configured sort');
+                    setSelectValue('#DefaultGenresRowItemFilter', defaults.genresRowItemFilter, 'Configured filter');
+                    setNullableBoolSelect('#DefaultHomeImageUseSeriesImage', defaults.homeImageUseSeriesImage);
+                    loadHomeRowOrderEditor(defaults.homeRowOrder || null);
+                    document.querySelector('#DefaultMergeContinueWatchingNextUp').checked = !!defaults.mergeContinueWatchingNextUp;
+
                     document.querySelector('#DefaultShowShuffleButton').checked = !!defaults.showShuffleButton;
                     document.querySelector('#DefaultShowGenresButton').checked = !!defaults.showGenresButton;
                     document.querySelector('#DefaultShowFavoritesButton').checked = !!defaults.showFavoritesButton;
                     document.querySelector('#DefaultShowCastButton').checked = !!defaults.showCastButton;
                     document.querySelector('#DefaultShowSyncPlayButton').checked = !!defaults.showSyncPlayButton;
                     document.querySelector('#DefaultShowLibrariesInToolbar').checked = !!defaults.showLibrariesInToolbar;
+
+                    setNullableBoolSelect('#DefaultEpisodePreviewEnabled', defaults.episodePreviewEnabled);
+                    setNullableBoolSelect('#DefaultPreviewAudioEnabled', defaults.previewAudioEnabled);
+
                     document.querySelector('#DefaultMdblistEnabled').checked = !!defaults.mdblistEnabled;
                     document.querySelector('#DefaultTmdbEpisodeRatingsEnabled').checked = !!defaults.tmdbEpisodeRatingsEnabled;
+                    setNullableBoolSelect('#DefaultMdblistShowRatingBadges', defaults.mdblistShowRatingBadges);
+                    loadRatingSourcesPicker(defaults.mdblistRatingSources || null);
+                    setNullableBoolSelect('#DefaultJellyseerrBlockNsfw', defaults.jellyseerrBlockNsfw);
 
-                    // Collection/Library picker visibility and loading
                     var sourceSelect = document.querySelector('#DefaultMediaBarSourceType');
                     var collectionPickerSection = document.querySelector('#DefaultCollectionPickerSection');
                     var libraryPickerSection = document.querySelector('#DefaultLibraryPickerSection');
@@ -433,44 +1633,73 @@
                             config.JellyseerrDisplayName = document.querySelector('#JellyseerrDisplayName').value || null;
                             config.MdblistApiKey = document.querySelector('#MdblistApiKey').value || null;
                             config.TmdbApiKey = document.querySelector('#TmdbApiKey').value || null;
+                            config.WebDefaultServerUrl = document.querySelector('#WebDefaultServerUrl').value || null;
+                            config.WebForcedServerUrl = document.querySelector('#WebForcedServerUrl').value || null;
+                            config.WebEnableWebRtcScan = document.querySelector('#WebEnableWebRtcScan').checked;
 
-                            // Save default user settings
                             config.DefaultUserSettings = config.DefaultUserSettings || {};
-                            config.DefaultUserSettings.navbarEnabled = document.querySelector('#DefaultNavbarEnabled').checked;
+                            config.DefaultUserSettings.visualTheme = document.querySelector('#DefaultVisualTheme').value || null;
+                            config.DefaultUserSettings.focusColor = document.querySelector('#DefaultFocusColor').value || null;
+                            config.DefaultUserSettings.watchedIndicator = document.querySelector('#DefaultWatchedIndicator').value || null;
+                            config.DefaultUserSettings.cardFocusExpansion = getNullableBoolSelect('#DefaultCardFocusExpansion');
+                            config.DefaultUserSettings.screensaverMode = document.querySelector('#DefaultScreensaverMode').value || null;
+
                             config.DefaultUserSettings.navbarPosition = document.querySelector('#DefaultNavbarPosition').value || null;
-                            config.DefaultUserSettings.mediaBarEnabled = document.querySelector('#DefaultMediaBarEnabled').checked;
+                            config.DefaultUserSettings.navbarColor = document.querySelector('#DefaultNavbarColor').value || null;
+                            config.DefaultUserSettings.navbarOpacity = getNullableIntInput('#DefaultNavbarOpacity');
+
                             config.DefaultUserSettings.mediaBarSourceType = document.querySelector('#DefaultMediaBarSourceType').value || null;
-                            // Collect selected collection IDs
+                            config.DefaultUserSettings.mediaBarMode = document.querySelector('#DefaultMediaBarMode').value || null;
+                            config.DefaultUserSettings.mediaBarTrailerAudio = getNullableBoolSelect('#DefaultMediaBarTrailerAudio');
+
                             var collectionCbs = document.querySelectorAll('.adminCollectionCb:checked');
                             var collectionIds = [];
                             for (var ci = 0; ci < collectionCbs.length; ci++) {
                                 collectionIds.push(collectionCbs[ci].dataset.id);
                             }
                             config.DefaultUserSettings.mediaBarCollectionIds = collectionIds.length > 0 ? collectionIds : null;
-                            // Collect selected library IDs
                             var libraryCbs = document.querySelectorAll('.adminLibraryCb:checked');
                             var libraryIds = [];
                             for (var li = 0; li < libraryCbs.length; li++) {
                                 libraryIds.push(libraryCbs[li].dataset.id);
                             }
                             config.DefaultUserSettings.mediaBarLibraryIds = libraryIds.length > 0 ? libraryIds : null;
-                            // Collect selected excluded genre IDs
                             var genreCbs = document.querySelectorAll('.adminGenreCb:checked');
                             var genreIds = [];
                             for (var gi = 0; gi < genreCbs.length; gi++) {
                                 genreIds.push(genreCbs[gi].dataset.id);
                             }
                             config.DefaultUserSettings.mediaBarExcludedGenres = genreIds.length > 0 ? genreIds : null;
-                            config.DefaultUserSettings.detailsPageEnabled = document.querySelector('#DefaultDetailsPageEnabled').checked;
-                            config.DefaultUserSettings.showClock = document.querySelector('#DefaultShowClock').checked;
+
+                            config.DefaultUserSettings.homeRowsStyle = document.querySelector('#DefaultHomeRowsStyle').value || null;
+                            config.DefaultUserSettings.homeImageTypeContinueWatching = document.querySelector('#DefaultHomeImageTypeContinueWatching').value || null;
+                            config.DefaultUserSettings.posterSize = document.querySelector('#DefaultPosterSize').value || null;
+                            config.DefaultUserSettings.displayFavoritesRows = getNullableBoolSelect('#DefaultDisplayFavoritesRows');
+                            config.DefaultUserSettings.displayCollectionsRows = getNullableBoolSelect('#DefaultDisplayCollectionsRows');
+                            config.DefaultUserSettings.displayGenresRows = getNullableBoolSelect('#DefaultDisplayGenresRows');
+                            config.DefaultUserSettings.favoritesRowSortBy = document.querySelector('#DefaultFavoritesRowSortBy').value || null;
+                            config.DefaultUserSettings.collectionsRowSortBy = document.querySelector('#DefaultCollectionsRowSortBy').value || null;
+                            config.DefaultUserSettings.genresRowSortBy = document.querySelector('#DefaultGenresRowSortBy').value || null;
+                            config.DefaultUserSettings.genresRowItemFilter = document.querySelector('#DefaultGenresRowItemFilter').value || null;
+                            config.DefaultUserSettings.homeImageUseSeriesImage = getNullableBoolSelect('#DefaultHomeImageUseSeriesImage');
+                            config.DefaultUserSettings.homeRowOrder = getHomeRowOrderValue();
+                            config.DefaultUserSettings.mergeContinueWatchingNextUp = document.querySelector('#DefaultMergeContinueWatchingNextUp').checked;
+
                             config.DefaultUserSettings.showShuffleButton = document.querySelector('#DefaultShowShuffleButton').checked;
                             config.DefaultUserSettings.showGenresButton = document.querySelector('#DefaultShowGenresButton').checked;
                             config.DefaultUserSettings.showFavoritesButton = document.querySelector('#DefaultShowFavoritesButton').checked;
                             config.DefaultUserSettings.showCastButton = document.querySelector('#DefaultShowCastButton').checked;
                             config.DefaultUserSettings.showSyncPlayButton = document.querySelector('#DefaultShowSyncPlayButton').checked;
                             config.DefaultUserSettings.showLibrariesInToolbar = document.querySelector('#DefaultShowLibrariesInToolbar').checked;
+
+                            config.DefaultUserSettings.episodePreviewEnabled = getNullableBoolSelect('#DefaultEpisodePreviewEnabled');
+                            config.DefaultUserSettings.previewAudioEnabled = getNullableBoolSelect('#DefaultPreviewAudioEnabled');
+
                             config.DefaultUserSettings.mdblistEnabled = document.querySelector('#DefaultMdblistEnabled').checked;
                             config.DefaultUserSettings.tmdbEpisodeRatingsEnabled = document.querySelector('#DefaultTmdbEpisodeRatingsEnabled').checked;
+                            config.DefaultUserSettings.mdblistShowRatingBadges = getNullableBoolSelect('#DefaultMdblistShowRatingBadges');
+                            config.DefaultUserSettings.mdblistRatingSources = getRatingSourcesValue();
+                            config.DefaultUserSettings.jellyseerrBlockNsfw = getNullableBoolSelect('#DefaultJellyseerrBlockNsfw');
 
                             ApiClient.updatePluginConfiguration(MoonfinConfig.pluginUniqueId, config).then(function(result) {
                                 Dashboard.processPluginConfigurationUpdateResult(result);
@@ -478,6 +1707,109 @@
                         });
                         return false;
                     });
+
+                var pushDefaultsBtn = document.querySelector('#PushDefaultsBtn');
+                if (pushDefaultsBtn && !pushDefaultsBtn.dataset.bound) {
+                    pushDefaultsBtn.dataset.bound = 'true';
+                    pushDefaultsBtn.addEventListener('click', function() {
+                        if (!window.confirm('Apply the configured defaults to all existing users now?')) {
+                            return;
+                        }
+
+                        var result = document.querySelector('#PushDefaultsResult');
+                        var serverUrl = ApiClient.serverAddress ? ApiClient.serverAddress() : '';
+                        var headers = getMoonfinAuthHeaders();
+
+                        pushDefaultsBtn.disabled = true;
+                        if (result) {
+                            result.style.display = 'none';
+                        }
+
+                        Dashboard.showLoadingMsg();
+                        fetch(serverUrl + '/Moonfin/Admin/PushDefaults', {
+                            method: 'POST',
+                            headers: headers,
+                            body: '{}'
+                        })
+                            .then(parseJsonResponse)
+                            .then(function(payload) {
+                                var usersUpdated = payload.usersUpdated != null ? payload.usersUpdated : payload.UsersUpdated;
+                                if (result) {
+                                    result.style.display = '';
+                                    result.style.color = '#52b54b';
+                                    result.textContent = 'Defaults applied to ' + (usersUpdated || 0) + ' user(s).';
+                                }
+                            })
+                            .catch(function(error) {
+                                if (result) {
+                                    result.style.display = '';
+                                    result.style.color = '#d9534f';
+                                    result.textContent = error && error.message ? error.message : 'Request failed. Check server logs.';
+                                }
+                            })
+                            .finally(function() {
+                                pushDefaultsBtn.disabled = false;
+                                Dashboard.hideLoadingMsg();
+                            });
+                    });
+                }
+
+                var broadcastBtn = document.querySelector('#BroadcastMessageBtn');
+                if (broadcastBtn && !broadcastBtn.dataset.bound) {
+                    broadcastBtn.dataset.bound = 'true';
+                    broadcastBtn.addEventListener('click', function() {
+                        var input = document.querySelector('#BroadcastMessageText');
+                        var result = document.querySelector('#BroadcastMessageResult');
+                        var message = (input && input.value ? input.value : '').trim();
+
+                        if (!message) {
+                            if (result) {
+                                result.style.display = '';
+                                result.style.color = '#d9534f';
+                                result.textContent = 'Please enter a message.';
+                            }
+                            return;
+                        }
+
+                        var serverUrl = ApiClient.serverAddress ? ApiClient.serverAddress() : '';
+                        var headers = getMoonfinAuthHeaders();
+
+                        broadcastBtn.disabled = true;
+                        if (result) {
+                            result.style.display = 'none';
+                        }
+
+                        Dashboard.showLoadingMsg();
+                        fetch(serverUrl + '/Moonfin/Broadcast', {
+                            method: 'POST',
+                            headers: headers,
+                            body: JSON.stringify({ message: message })
+                        })
+                            .then(parseJsonResponse)
+                            .then(function(payload) {
+                                var deliveries = payload.deliveries != null ? payload.deliveries : payload.Deliveries;
+                                if (result) {
+                                    result.style.display = '';
+                                    result.style.color = '#52b54b';
+                                    result.textContent = 'Message sent to ' + (deliveries || 0) + ' active stream(s).';
+                                }
+                                if (input) {
+                                    input.value = '';
+                                }
+                            })
+                            .catch(function(error) {
+                                if (result) {
+                                    result.style.display = '';
+                                    result.style.color = '#d9534f';
+                                    result.textContent = error && error.message ? error.message : 'Request failed. Check server logs.';
+                                }
+                            })
+                            .finally(function() {
+                                broadcastBtn.disabled = false;
+                                Dashboard.hideLoadingMsg();
+                            });
+                    });
+                }
             });
         </script>
     </div>

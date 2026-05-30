@@ -3,7 +3,7 @@
 # Usage: .\build.ps1 [-Version "1.1.0.0"] [-TargetAbi "10.10.0"]
 
 param(
-    [string]$Version = "1.8.2.0",
+    [string]$Version = "1.8.8.0",
     [string]$TargetAbi = "10.10.0"
 )
 
@@ -13,33 +13,16 @@ $BuildTimestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 $RootDir = $PSScriptRoot
 $BackendDir = Join-Path $RootDir "backend"
 $FrontendDir = Join-Path $RootDir "frontend"
-$WebDistDir = Join-Path $FrontendDir "dist"
 
 Write-Host "Building Moonfin v${Version} for Jellyfin ${TargetAbi}..."
 Write-Host "Build Time: ${BuildTimestamp}"
 
-# Build the web plugin first
-$BuildJs = Join-Path $FrontendDir "build.js"
-if (Test-Path $BuildJs) {
+# Validate expected Flutter web bundle location
+$FrontendIndex = Join-Path $FrontendDir "index.html"
+if (-not (Test-Path $FrontendIndex)) {
     Write-Host ""
-    Write-Host "--- Building web plugin ---"
-    Push-Location $FrontendDir
-    node build.js
-    if ($LASTEXITCODE -ne 0) { Pop-Location; throw "Web plugin build failed" }
-    Pop-Location
-} else {
-    Write-Host "Warning: frontend/build.js not found, skipping web build"
-}
-
-# Sync web plugin output into backend embedded resources
-if (Test-Path $WebDistDir) {
-    Write-Host ""
-    Write-Host "--- Syncing web files ---"
-    Copy-Item (Join-Path $WebDistDir "plugin.js") (Join-Path $BackendDir "Web\plugin.js") -Force
-    Copy-Item (Join-Path $WebDistDir "plugin.css") (Join-Path $BackendDir "Web\plugin.css") -Force
-    Write-Host "Web files synced to backend/Web/"
-} else {
-    Write-Host "Warning: frontend/dist/ not found, skipping web file sync"
+    Write-Host "Warning: frontend/index.html not found."
+    Write-Host "Run Mobile-Desktop/build-web-plugin.sh before packaging if you need bundled web assets."
 }
 
 # Build the .NET plugin
@@ -57,6 +40,22 @@ New-Item -ItemType Directory -Path $ReleaseDir | Out-Null
 # Copy DLL to release folder
 $DllPath = Join-Path $BackendDir "bin\Release\net8.0\Moonfin.Server.dll"
 Copy-Item $DllPath $ReleaseDir
+
+# Bundle Flutter web files next to plugin DLL for local/sideload installs
+if (Test-Path $FrontendIndex) {
+    $ReleaseFrontend = Join-Path $ReleaseDir "frontend"
+    New-Item -ItemType Directory -Path $ReleaseFrontend -Force | Out-Null
+    Copy-Item (Join-Path $FrontendDir "*") $ReleaseFrontend -Recurse -Force
+
+    $NodeModules = Join-Path $ReleaseFrontend "node_modules"
+    if (Test-Path $NodeModules) { Remove-Item $NodeModules -Recurse -Force }
+
+    $PackageJson = Join-Path $ReleaseFrontend "package.json"
+    if (Test-Path $PackageJson) { Remove-Item $PackageJson -Force }
+
+    $PackageLock = Join-Path $ReleaseFrontend "package-lock.json"
+    if (Test-Path $PackageLock) { Remove-Item $PackageLock -Force }
+}
 
 # Create the ZIP file
 $ZipName = "Moonfin.Server-${Version}.zip"

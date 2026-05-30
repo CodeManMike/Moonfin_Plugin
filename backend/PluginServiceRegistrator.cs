@@ -14,6 +14,8 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
     public void RegisterServices(IServiceCollection serviceCollection, IServerApplicationHost applicationHost)
     {
         serviceCollection.AddSingleton<MoonfinSettingsService>();
+        serviceCollection.AddSingleton<MoonfinThemeValidator>();
+        serviceCollection.AddSingleton<MoonfinThemeStore>();
         serviceCollection.AddSingleton<JellyseerrSessionService>();
         serviceCollection.AddSingleton<MdbListCacheService>();
         serviceCollection.AddHttpClient();

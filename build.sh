@@ -5,7 +5,7 @@
 
 set -e
 
-VERSION="${1:-1.8.2.0}"
+VERSION="${1:-1.8.8.0}"
 TARGET_ABI="${2:-10.10.0}"
 BUILD_TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
@@ -13,35 +13,36 @@ BUILD_TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="$ROOT_DIR/backend"
 FRONTEND_DIR="$ROOT_DIR/frontend"
-WEB_DIST_DIR="$FRONTEND_DIR/dist"
 
 echo "Building Moonfin v${VERSION} for Jellyfin ${TARGET_ABI}..."
 echo "Build Time: ${BUILD_TIMESTAMP}"
 
-# Build the web plugin first
-if [ -f "$FRONTEND_DIR/build.js" ]; then
-    echo ""
-    echo "--- Building web plugin ---"
-    (cd "$FRONTEND_DIR" && node build.js)
-else
-    echo "Warning: frontend/build.js not found, skipping web build"
+# Resolve dotnet binary (PATH first, then local user install)
+DOTNET_BIN="dotnet"
+if ! command -v "$DOTNET_BIN" &> /dev/null; then
+    if [ -x "$HOME/.dotnet/dotnet" ]; then
+        DOTNET_BIN="$HOME/.dotnet/dotnet"
+    else
+        echo ""
+        echo "Error: dotnet command not found."
+        echo "Install .NET 8 SDK, or install locally with:"
+        echo "  curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh"
+        echo "  bash /tmp/dotnet-install.sh --channel 8.0 --install-dir \"\$HOME/.dotnet\""
+        exit 127
+    fi
 fi
 
-# Sync web plugin output into backend embedded resources
-if [ -d "$WEB_DIST_DIR" ]; then
+# Validate expected Flutter web bundle location
+if [ ! -f "$FRONTEND_DIR/index.html" ]; then
     echo ""
-    echo "--- Syncing web files ---"
-    cp "$WEB_DIST_DIR/plugin.js" "$BACKEND_DIR/Web/plugin.js"
-    cp "$WEB_DIST_DIR/plugin.css" "$BACKEND_DIR/Web/plugin.css"
-    echo "Web files synced to backend/Web/"
-else
-    echo "Warning: frontend/dist/ not found, skipping web file sync"
+    echo "Warning: frontend/index.html not found."
+    echo "Run Mobile-Desktop/build-web-plugin.sh before packaging if you need bundled web assets."
 fi
 
 # Build the .NET plugin
 echo ""
 echo "--- Building server plugin ---"
-dotnet build "$BACKEND_DIR/Moonfin.Server.csproj" -c Release
+"$DOTNET_BIN" build "$BACKEND_DIR/Moonfin.Server.csproj" -c Release
 
 # Create release directory
 RELEASE_DIR="$ROOT_DIR/release"
@@ -50,6 +51,14 @@ mkdir -p "$RELEASE_DIR"
 
 # Copy DLL to release folder
 cp "$BACKEND_DIR/bin/Release/net8.0/Moonfin.Server.dll" "$RELEASE_DIR/"
+
+# Bundle Flutter web files next to plugin DLL for local/sideload installs
+if [ -f "$FRONTEND_DIR/index.html" ]; then
+    mkdir -p "$RELEASE_DIR/frontend"
+    cp -R "$FRONTEND_DIR/." "$RELEASE_DIR/frontend/"
+    rm -rf "$RELEASE_DIR/frontend/node_modules"
+    rm -f "$RELEASE_DIR/frontend/package.json" "$RELEASE_DIR/frontend/package-lock.json"
+fi
 
 # Generate meta.json for plugin discovery
 PLUGIN_GUID="8c5d0e91-4f2a-4b6d-9e3f-1a7c8d9e0f2b"

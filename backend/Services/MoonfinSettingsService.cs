@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Threading.Channels;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Moonfin.Server.Models;
@@ -13,6 +15,7 @@ public class MoonfinSettingsService
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly ILogger<MoonfinSettingsService> _logger;
     private static readonly SemaphoreSlim _lock = new(1, 1);
+    private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<Channel<string>, byte>> _sseChannels = new();
 
     public MoonfinSettingsService(ILogger<MoonfinSettingsService> logger)
     {
@@ -156,9 +159,16 @@ public class MoonfinSettingsService
         {
             _lock.Release();
         }
+
+          NotifySettingsChanged(userId);
     }
 
-    public async Task SaveProfileAsync(Guid userId, string profileName, MoonfinSettingsProfile profile, string? clientId = null)
+      public async Task SaveProfileAsync(
+          Guid userId,
+          string profileName,
+          MoonfinSettingsProfile profile,
+          string? clientId = null,
+          bool notifySettingsChanged = true)
     {
         var filePath = GetUserSettingsPath(userId);
 
@@ -208,6 +218,106 @@ public class MoonfinSettingsService
         {
             _lock.Release();
         }
+
+        if (notifySettingsChanged)
+        {
+            NotifySettingsChanged(userId);
+        }
+    }
+
+    public Channel<string> RegisterSseChannel(Guid userId)
+    {
+        var channel = Channel.CreateBounded<string>(new BoundedChannelOptions(16)
+        {
+            SingleReader = true,
+            SingleWriter = false,
+            FullMode = BoundedChannelFullMode.DropOldest
+        });
+
+        var channels = _sseChannels.GetOrAdd(userId, _ => new ConcurrentDictionary<Channel<string>, byte>());
+        channels[channel] = 0;
+        return channel;
+    }
+
+    public void UnregisterSseChannel(Guid userId, Channel<string> channel)
+    {
+        if (_sseChannels.TryGetValue(userId, out var channels))
+        {
+            channels.TryRemove(channel, out _);
+            if (channels.IsEmpty)
+            {
+                _sseChannels.TryRemove(userId, out _);
+            }
+        }
+
+        channel.Writer.TryComplete();
+    }
+
+    public void NotifySettingsChanged(Guid userId)
+    {
+        if (!_sseChannels.TryGetValue(userId, out var channels))
+        {
+            return;
+        }
+
+        var payload = JsonSerializer.Serialize(new { type = "settingsUpdated" });
+
+        foreach (var channel in channels.Keys)
+        {
+            channel.Writer.TryWrite(payload);
+        }
+    }
+
+    public int BroadcastMessage(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return 0;
+        }
+
+        var payload = JsonSerializer.Serialize(new
+        {
+            type = "adminMessage",
+            text = message
+        });
+
+        var sent = 0;
+        foreach (var channels in _sseChannels.Values)
+        {
+            foreach (var channel in channels.Keys)
+            {
+                if (channel.Writer.TryWrite(payload))
+                {
+                    sent++;
+                }
+            }
+        }
+
+        return sent;
+    }
+
+    public int BroadcastSystemEvent(string eventType)
+    {
+        if (string.IsNullOrWhiteSpace(eventType))
+        {
+            return 0;
+        }
+
+        var payload = JsonSerializer.Serialize(new { type = eventType.Trim() });
+        var sent = 0;
+
+        foreach (var channels in _sseChannels.Values)
+        {
+            foreach (var channel in channels.Keys)
+            {
+                if (channel.Writer.TryWrite(payload))
+                {
+                    sent++;
+                }
+            }
+        }
+
+        return sent;
     }
 
     private MoonfinUserSettings MigrateV1ToV2(MoonfinUserSettings v1)
@@ -367,6 +477,58 @@ public class MoonfinSettingsService
         }
 
         return existing;
+    }
+
+    public async Task<int> PushDefaultsToAllUsersAsync(MoonfinSettingsProfile defaults)
+    {
+        ArgumentNullException.ThrowIfNull(defaults);
+
+        if (!HasAnyProfileValues(defaults))
+        {
+            return 0;
+        }
+
+        EnsureDataDirectory();
+
+        var usersUpdated = 0;
+        foreach (var filePath in Directory.EnumerateFiles(_dataPath, "*.json", SearchOption.TopDirectoryOnly))
+        {
+            var fileName = Path.GetFileNameWithoutExtension(filePath);
+            if (!Guid.TryParse(fileName, out var userId))
+            {
+                continue;
+            }
+
+            try
+            {
+                  await SaveProfileAsync(
+                      userId,
+                      "global",
+                      defaults,
+                      "admin-default-push",
+                      notifySettingsChanged: false);
+                usersUpdated++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to push admin defaults for user {UserId}", userId);
+            }
+        }
+
+        return usersUpdated;
+    }
+
+    private static bool HasAnyProfileValues(MoonfinSettingsProfile profile)
+    {
+        foreach (var prop in typeof(MoonfinSettingsProfile).GetProperties())
+        {
+            if (prop.GetValue(profile) != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public async Task DeleteUserSettingsAsync(Guid userId)

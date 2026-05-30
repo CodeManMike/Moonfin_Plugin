@@ -18,6 +18,9 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("jellyseerrApiKey")]
     public string? JellyseerrApiKey { get; set; }
 
+    [JsonPropertyName("jellyseerrBlockNsfw")]
+    public bool? JellyseerrBlockNsfw { get; set; }
+
     [JsonPropertyName("jellyseerrRows")]
     public JellyseerrRowsConfig? JellyseerrRows { get; set; }
 
@@ -33,20 +36,14 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("mdblistShowRatingNames")]
     public bool? MdblistShowRatingNames { get; set; }
 
+    [JsonPropertyName("mdblistShowRatingBadges")]
+    public bool? MdblistShowRatingBadges { get; set; }
+
     [JsonPropertyName("tmdbApiKey")]
     public string? TmdbApiKey { get; set; }
 
     [JsonPropertyName("tmdbEpisodeRatingsEnabled")]
     public bool? TmdbEpisodeRatingsEnabled { get; set; }
-
-    [JsonPropertyName("navbarEnabled")]
-    public bool? NavbarEnabled { get; set; }
-
-    [JsonPropertyName("detailsPageEnabled")]
-    public bool? DetailsPageEnabled { get; set; }
-
-    [JsonPropertyName("libraryPageEnabled")]
-    public bool? LibraryPageEnabled { get; set; }
 
     [JsonPropertyName("detailsBackdropOpacity")]
     public int? DetailsBackdropOpacity { get; set; }
@@ -57,11 +54,26 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("navbarPosition")]
     public string? NavbarPosition { get; set; }
 
-    [JsonPropertyName("showClock")]
-    public bool? ShowClock { get; set; }
+    [JsonPropertyName("navbarColor")]
+    public string? NavbarColor { get; set; }
 
-    [JsonPropertyName("use24HourClock")]
-    public bool? Use24HourClock { get; set; }
+    [JsonPropertyName("navbarOpacity")]
+    public int? NavbarOpacity { get; set; }
+
+    [JsonPropertyName("focusColor")]
+    public string? FocusColor { get; set; }
+
+    [JsonPropertyName("visualTheme")]
+    public string? VisualTheme { get; set; }
+
+    [JsonPropertyName("customThemeId")]
+    public string? CustomThemeId { get; set; }
+
+    [JsonPropertyName("watchedIndicator")]
+    public string? WatchedIndicator { get; set; }
+
+    [JsonPropertyName("cardFocusExpansion")]
+    public bool? CardFocusExpansion { get; set; }
 
     [JsonPropertyName("showShuffleButton")]
     public bool? ShowShuffleButton { get; set; }
@@ -96,8 +108,8 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("confirmExit")]
     public bool? ConfirmExit { get; set; }
 
-    [JsonPropertyName("mediaBarEnabled")]
-    public bool? MediaBarEnabled { get; set; }
+    [JsonPropertyName("mediaBarMode")]
+    public string? MediaBarMode { get; set; }
 
     [JsonPropertyName("mediaBarItemCount")]
     public int? MediaBarItemCount { get; set; }
@@ -116,6 +128,15 @@ public class MoonfinSettingsProfile
 
     [JsonPropertyName("mediaBarTrailerPreview")]
     public bool? MediaBarTrailerPreview { get; set; }
+
+    [JsonPropertyName("mediaBarTrailerAudio")]
+    public bool? MediaBarTrailerAudio { get; set; }
+
+    [JsonPropertyName("episodePreviewEnabled")]
+    public bool? EpisodePreviewEnabled { get; set; }
+
+    [JsonPropertyName("previewAudioEnabled")]
+    public bool? PreviewAudioEnabled { get; set; }
 
     [JsonPropertyName("mediaBarSourceType")]
     public string? MediaBarSourceType { get; set; }
@@ -138,8 +159,20 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("homeRowsImageTypeOverride")]
     public bool? HomeRowsImageTypeOverride { get; set; }
 
+    [JsonPropertyName("homeRowsStyle")]
+    public string? HomeRowsStyle { get; set; }
+
     [JsonPropertyName("homeRowsImageType")]
     public string? HomeRowsImageType { get; set; }
+
+    [JsonPropertyName("homeImageTypeContinueWatching")]
+    public string? HomeImageTypeContinueWatching { get; set; }
+
+    [JsonPropertyName("homeImageUseSeriesImage")]
+    public bool? HomeImageUseSeriesImage { get; set; }
+
+    [JsonPropertyName("posterSize")]
+    public string? PosterSize { get; set; }
 
     [JsonPropertyName("detailsScreenBlur")]
     public string? DetailsScreenBlur { get; set; }
@@ -162,39 +195,24 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("homeRowOrder")]
     public List<string>? HomeRowOrder { get; set; }
 
-    [JsonPropertyName("homeRowsV2")]
-    public List<MoonfinCustomHomeRow>? HomeRowsV2 { get; set; }
+    [JsonPropertyName("displayFavoritesRows")]
+    public bool? DisplayFavoritesRows { get; set; }
 
-    [JsonPropertyName("homeRowsSource")]
-    public string? HomeRowsSource { get; set; }
-}
+    [JsonPropertyName("displayCollectionsRows")]
+    public bool? DisplayCollectionsRows { get; set; }
 
-public class MoonfinCustomHomeRow
-{
-    [JsonPropertyName("id")]
-    public string? Id { get; set; }
+    [JsonPropertyName("displayGenresRows")]
+    public bool? DisplayGenresRows { get; set; }
 
-    [JsonPropertyName("title")]
-    public string? Title { get; set; }
+    [JsonPropertyName("favoritesRowSortBy")]
+    public string? FavoritesRowSortBy { get; set; }
 
-    [JsonPropertyName("kind")]
-    public string? Kind { get; set; }
+    [JsonPropertyName("collectionsRowSortBy")]
+    public string? CollectionsRowSortBy { get; set; }
 
-    [JsonPropertyName("source")]
-    public string? Source { get; set; }
+    [JsonPropertyName("genresRowSortBy")]
+    public string? GenresRowSortBy { get; set; }
 
-    [JsonPropertyName("enabled")]
-    public bool? Enabled { get; set; }
-
-    [JsonPropertyName("order")]
-    public int? Order { get; set; }
-
-    [JsonPropertyName("route")]
-    public string? Route { get; set; }
-
-    [JsonPropertyName("viewMode")]
-    public string? ViewMode { get; set; }
-
-    [JsonPropertyName("additionalData")]
-    public string? AdditionalData { get; set; }
+    [JsonPropertyName("genresRowItemFilter")]
+    public string? GenresRowItemFilter { get; set; }
 }

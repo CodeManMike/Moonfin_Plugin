@@ -1,35 +1,3 @@
-# ─────────────────────────────────────────────────────────────
-# Moonfin Plugin — CI Build Workflow
-# ─────────────────────────────────────────────────────────────
-#
-# Triggers:
-#   • Push to master  → build + package ZIP artifact
-#   • PR to master    → build + upload result artifact
-#
-# Security:
-#   Uses pull_request (not pull_request_target) so untrusted fork
-#   code never runs with write access. PR comments are posted by
-#   a separate workflow (comment.yml) triggered via workflow_run.
-#
-# Build flow:
-#   1. Frontend install  (npm ci)
-#   2. Frontend build    (node build.js)       — skipped if (1) fails
-#   3. Sync web files    (cp to backend/Web/)  — skipped if (2) fails
-#   4. Backend build     (dotnet build)        — skipped if (2) fails
-#   5. Gate step         — fails the job if any of (1)-(4) didn't succeed
-#
-# Error handling:
-#   Build steps (1), (2), (4) use continue-on-error so the job keeps
-#   running even on failure. Their output is captured to log files via
-#   tee. The gate step (5) re-fails the job so the overall status is
-#   correct. On PRs, build results (outcomes + logs) are uploaded as
-#   an artifact for the comment.yml workflow to pick up.
-#
-# Packaging (master only, after successful build):
-#   Reads version + ABI from the .csproj, creates a release ZIP with
-#   the DLL + meta.json, and uploads it as a workflow artifact.
-# ─────────────────────────────────────────────────────────────
-
 name: Build
 
 on:
@@ -50,73 +18,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
-      # ── Frontend ──────────────────────────────────────────────
-      # continue-on-error: lets the job continue so we can upload
-      #   build results even when a step fails.
-      # set -o pipefail: ensures the pipe returns the command's exit
-      #   code, not tee's (which always succeeds).
-      # 2>&1 | tee: captures stdout+stderr to a log file for the
-      #   PR comment, while still printing to the Actions console.
-      - name: Install frontend dependencies
-        id: frontend_install
-        continue-on-error: true
-        working-directory: frontend
-        run: |
-          set -o pipefail
-          npm ci 2>&1 | tee "${{ runner.temp }}/frontend-install.log"
-
-      - name: Build frontend
-        if: steps.frontend_install.outcome == 'success'
-        id: frontend_build
-        continue-on-error: true
-        working-directory: frontend
-        run: |
-          set -o pipefail
-          node build.js 2>&1 | tee "${{ runner.temp }}/frontend-build.log"
-
-      # ── Sync web files into backend ───────────────────────────
-      - name: Sync web files
-        if: steps.frontend_build.outcome == 'success'
-        run: |
-          mkdir -p backend/Web
-          cp frontend/dist/plugin.js backend/Web/plugin.js
-          cp frontend/dist/plugin.css backend/Web/plugin.css
-
-      # ── Backend ───────────────────────────────────────────────
       - name: Build backend
-        if: steps.frontend_build.outcome == 'success'
         id: backend_build
         continue-on-error: true
         run: |
           set -o pipefail
           dotnet build backend/Moonfin.Server.csproj -c Release 2>&1 | tee "${{ runner.temp }}/backend-build.log"
 
-      # ── Gate ───────────────────────────────────────────────────
-      # continue-on-error masks failures from the job status. This
-      # gate step re-fails the job when any build step didn't
-      # succeed (covers both 'failure' and 'skipped' outcomes).
       - name: Fail if build failed
-        id: build_gate
-        if: |
-          steps.frontend_install.outcome != 'success' ||
-          steps.frontend_build.outcome != 'success' ||
-          steps.backend_build.outcome != 'success'
+        if: steps.backend_build.outcome != 'success'
         run: exit 1
 
-      # ── Upload build results for PR comment workflow ──────────
-      # Always runs on PRs so the comment.yml workflow can post
-      # results even on failure. Writes step outcomes + PR number
-      # to a metadata file alongside the log files.
       - name: Save build results
         if: always() && github.event_name == 'pull_request'
         run: |
@@ -126,16 +43,13 @@ jobs:
           {
             "pr_number": ${{ github.event.pull_request.number }},
             "sha": "${{ github.event.pull_request.head.sha }}",
-            "frontend_install": "${{ steps.frontend_install.outcome }}",
-            "frontend_build": "${{ steps.frontend_build.outcome }}",
             "backend_build": "${{ steps.backend_build.outcome }}"
           }
           EOF
 
-          # Copy any log files that exist
-          for f in frontend-install.log frontend-build.log backend-build.log; do
-            [ -f "${{ runner.temp }}/$f" ] && cp "${{ runner.temp }}/$f" "${{ runner.temp }}/build-results/"
-          done
+          if [ -f "${{ runner.temp }}/backend-build.log" ]; then
+            cp "${{ runner.temp }}/backend-build.log" "${{ runner.temp }}/build-results/"
+          fi
 
       - name: Upload build results
         if: always() && github.event_name == 'pull_request'
@@ -144,7 +58,6 @@ jobs:
           name: build-results
           path: ${{ runner.temp }}/build-results/
 
-      # ── Package (master only) ─────────────────────────────────
       - name: Read version from csproj
         if: github.event_name == 'push' && steps.backend_build.outcome == 'success'
         id: version
@@ -170,6 +83,13 @@ jobs:
 
           mkdir -p release
           cp backend/bin/Release/net8.0/Moonfin.Server.dll release/
+
+          if [ -f frontend/index.html ]; then
+            mkdir -p release/frontend
+            cp -R frontend/. release/frontend/
+            rm -rf release/frontend/node_modules
+            rm -f release/frontend/package.json release/frontend/package-lock.json
+          fi
 
           cat > release/meta.json <<EOF
           {
@@ -208,7 +128,7 @@ jobs:
       - name: Build summary (master)
         if: github.event_name == 'push' && steps.backend_build.outcome == 'success'
         run: |
-          echo "## ✅ Build Successful" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Successful" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY

@@ -10,7 +10,7 @@ namespace Moonfin.Server.Services;
 /// <summary>
 /// Hosted service that automatically registers Moonfin's file transformations
 /// when the plugin is loaded. Unlike the scheduled task variant, this runs
-/// automatically on every plugin load — including after plugin updates —
+/// automatically on every plugin load, including after plugin updates,
 /// without requiring a full Jellyfin restart or manual task execution.
 /// </summary>
 public class FileTransformationHostedService : IHostedService
@@ -58,7 +58,7 @@ public class FileTransformationHostedService : IHostedService
         if (ftAssembly == null)
         {
             _logger.LogWarning(
-                "Moonfin: File Transformation plugin not found. Frontend auto-injection is disabled. " +
+                "Moonfin: File Transformation plugin not found. Header entrypoint injection is disabled. " +
                 "Install from https://github.com/IAmParadox27/jellyfin-plugin-file-transformation");
             return;
         }

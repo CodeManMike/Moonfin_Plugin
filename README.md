@@ -1,5 +1,5 @@
 <h1 align="center">Moonfin for Jellyfin Web and Mobile</h1>
-<h3 align="center">A Jellyfin server plugin that adds a custom UI layer to Jellyfin Web and the Mobile App and cross-client settings synchronization. Includes an optional Jellyseerr/Seerr integration with seamless authenticated proxy support.</h3>
+<h3 align="center">A Jellyfin server plugin that serves the Moonfin Flutter web app, provides cross-client settings synchronization, and includes optional Seerr proxy integration.</h3>
 
 ---
 
@@ -11,41 +11,45 @@
 
 ## What is this?
 
-This is a server plugin that redesigns the Jellyfin Web and Mobile UI to match the UI of the Moonfin clients without modifying Jellyfin itself. It injects a custom frontend on top of the stock interface, adding a featured media bar, a redesigned details screen, a quick-access navigation bar, embedded Jellyseerr/Seerr media requests, MDBList and TMDB ratings, and more. Every feature is optional and toggled per-user from a built-in settings panel.
+Moonfin is a Jellyfin server plugin that serves the Moonfin Flutter app at `/Moonfin/Web/` and provides server APIs used by Moonfin clients across web, mobile, and desktop.
 
-All user preferences sync across devices through the plugin's server-side API, so your settings follow you from desktop to phone to TV. Admins can set server-wide defaults and provide shared API keys for MDBList and TMDB so individual users don't need their own.
+The plugin handles settings sync, runtime web config/discovery, media bar and home row data, ratings integrations, and Seerr proxy/SSO. User settings follow a profiled model (global plus optional desktop/mobile/tv overrides), and admins can define server-wide defaults.
 
-Moonfin requires the [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) plugin to inject its web UI into Jellyfin's pages.
+Moonfin can be opened directly at `/Moonfin/Web/`. A stock Jellyfin Web header button is optional and available through the [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) bridge.
 
-## Enabling the UI
+## Opening Moonfin
 
-All Moonfin features are **disabled by default** after installation. To activate them:
+Primary path: open `https://your-jellyfin-host/Moonfin/Web/` directly.
 
-1. Press the Moonfin logo next to the SyncPlay button
+Optional path: install File Transformation and use the header Moonfin button next to SyncPlay inside stock Jellyfin Web.
 <img width="1521" height="164" alt="image" src="https://github.com/user-attachments/assets/bcb69e4b-edbe-4d1f-b9f1-dc81822d55d9" />
 
-> **Tip for admins:** You can pre-enable features for all users from *Dashboard → Plugins → Moonfin* by setting **Default User Settings**. Users who haven't customized a setting will inherit the admin default, so new users get the full UI out of the box.
+> **Tip for admins:** Use *Dashboard → Plugins → Moonfin* to set default user settings and web runtime options (forced/default server URL, WebRTC scan toggle).
 
 ## Features
 
-### Web UI (`frontend/`)
-- **Custom Details Screen** - Full-screen overlay with backdrop, logos, metadata, and a permission-aware context menu matching jellyfin-web's behavior
-- **Navigation Bar** - Pill-shaped toolbar with Home, Search, Shuffle, Genres, Favorites, Library buttons, and user avatar
-- **Featured Media Bar** - Hero slideshow with Ken Burns animation, content logos, and metadata overlay
-- **Jellyseerr/Seerr Panel** - Embedded Jellyseerr or Seerr iframe with automatic session-based authentication via the server proxy
-- **Settings Panel** - Per-user settings for all features, with device profiles and cross-client sync
-- **Home Screen Row Ordering** - Drag-and-drop reorder and toggle visibility of home screen sections (Continue Watching, Next Up, Latest Media, etc.); changes write directly to Jellyfin's DisplayPreferences so they take effect immediately
-- **Device Profiles** - Separate setting overrides for desktop, mobile, and TV; each profile inherits from a shared global base so you only configure what differs per device
-- **SyncPlay Integration** - Group watch UI with lobby, group management, and real-time state sync via WebSocket; modal dialog on desktop/mobile web, API-only on TV (native clients use their own dialog)
-- **TV Support** - Spatial navigation and remote-friendly focus management for webOS/Tizen
+### Moonfin App (`frontend/`)
+- **Cross-Platform Moonfin UI** - One app surface used across web, TV, mobile, and desktop with adaptive navigation and layout behavior
+- **Full Library Browsing** - Home, search, favorites, genres, folder/collection views, and unified multi-server library support
+- **Multiple Playback Surfaces** - Video, audio, photo, book, trailer, next-up, and still-watching playback routes
+- **Live TV and DVR Screens** - Live TV browse, guide, schedule, recordings, series recordings, and live TV player routes
+- **Integrated Admin Screens** - In-app admin routes for users, libraries, tasks, settings, plugins, logs, devices, analytics, and more
+- **Built-In Seerr Screens** - Discover, requests, browse, media detail, and person detail flows in Moonfin
+- **Web Diagnostics Route** - Dedicated diagnostics view for web startup and routing issues
+- **Per-User Settings Profiles** - Global plus optional desktop/mobile/tv overrides with server sync
 
 ### Server Plugin (`backend/`)
-- **Settings Sync API** - Per-user preference storage with device profiles, three-way merge, and admin-configurable defaults
-- **Device Profile Architecture** - v2 settings envelope with a global base profile and sparse desktop/mobile/TV overrides; device profiles only store values that differ from global
-- **Admin Default Settings** - Admins can set server-wide default values for every user setting; users who haven't customized a setting inherit the admin default
-- **Jellyseerr/Seerr Proxy** - Authenticated reverse proxy that creates browser sessions automatically, so the iframe loads without a separate login (supports both Jellyseerr and Seerr v3)
-- **Admin Configuration** - Dashboard page for Jellyseerr/Seerr URL, display name, enable/disable toggles, shared API keys, and default user settings
-- **Web Injection** - Serves the frontend JS/CSS as embedded resources, automatically injected via the [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) plugin
+- **Settings Sync API** - Per-user preference storage with resolved profiles, profile-specific writes, and admin-configurable defaults
+- **Live Sync Events (SSE)** - Optional real-time settings/theme refresh events through `/Moonfin/Settings/Stream`
+- **Admin Defaults Operations** - Push current defaults to all existing users and broadcast admin messages/events
+- **Admin Broadcast Messages** - Admins can send announcements to all connected users at any time for in-client display
+- **Runtime Web Config and Discovery** - `/Moonfin/Web/config.json` plus `/Moonfin/Discovery` endpoints for same-origin plugin mode startup
+- **Theme Upload and Validation APIs** - Admin upload/delete endpoints with strict schema validation and metadata tracking
+- **Media Bar and Genre APIs** - Server-resolved media bar content and genre filters shared across clients
+- **MDBList and TMDB Proxies** - Ratings endpoints that keep API keys server-side
+- **Seerr Proxy and SSO** - Authenticated API proxy endpoints with session handling and variant-aware config
+- **Web Asset Hosting** - Serves Flutter web build output under `/Moonfin/Web/` with SPA fallback routing
+- **Optional Header Bridge** - Lightweight File Transformation integration for one-click entry from stock Jellyfin Web
 ----
 # Screenshots
 
@@ -95,19 +99,25 @@ All Moonfin features are **disabled by default** after installation. To activate
    | Windows | `%ProgramData%\Jellyfin\Server\plugins\Moonfin\` |
 3. Restart Jellyfin
 
-### Loading the Web UI
+### Opening the Web App
 
-Moonfin uses the [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) plugin to automatically inject its web UI.
+Moonfin serves its web app at `/Moonfin/Web/`.
+
+1. Open `/Moonfin/Web/` directly on your Jellyfin server.
+2. If assets do not appear after a fresh install, run the **Moonfin Startup** scheduled task once, then refresh the page.
+
+Optional one-click stock web entry:
 
 1. Add the File Transformation plugin repository to Jellyfin:
    - **URL:** `https://www.iamparadox.dev/jellyfin/plugins/manifest.json`
 2. Install the **File Transformation** plugin from the catalog
 3. Restart Jellyfin
 4. Force refresh your browser (Ctrl+Shift+R)
+5. Click the Moonfin icon next to SyncPlay
 
 > **UI not loading?** Go to *Dashboard → Scheduled Tasks* and run the **Moonfin Startup** task once, then refresh your browser.
 
-### **Don't want the logo?** 
+### **Hide the optional header logo**
 Add these CSS lines on Branding/Custom CSS:
 
 ```
@@ -124,25 +134,42 @@ Jellyfin Dashboard → Administration → Plugins → **Moonfin** to configure:
 - Seerr URL, display name, and enable/disable toggle
 - Shared MDBList and TMDB API keys (so individual users don't need their own)
 - **Default user settings** — set server-wide defaults for any user-facing setting; users who haven't customized a value inherit the admin default
+- **Push Defaults to Existing Users** button to apply current defaults to already-initialized user profiles
+- **Broadcast Message** action to send an announcement to all users for immediate in-client display
+- Web startup runtime options (forced/default server URL and WebRTC scan toggle)
+- Uploaded custom themes list management (upload/delete)
 - Enable/disable settings sync globally
+
+### Theme Editor and Custom Themes
+
+- Built-in editor is available at `/Moonfin/Web/theme/` for visual token editing, validation, and JSON export.
+- Admins can upload exported themes in the plugin config page, and clients can fetch uploaded themes through `/Moonfin/Themes`.
+- Uploaded themes are schema-validated server-side and tracked with metadata (display name, checksum, uploader, upload time).
 
 # User Settings
 
-Click the **Moonfin icon** in the header bar or open the **☰ hamburger menu → Moonfin** to open the settings panel. From there you can customize the navbar, media bar, details screen, seasonal effects, ratings, and more.
+Open Moonfin at `/Moonfin/Web/`, then use the in-app settings page to customize navbar/media bar behavior, details screen settings, ratings integrations, and other synced preferences.
 
 Settings support **device profiles**: a shared global profile plus optional overrides for desktop, mobile, and TV. Device profiles only store values that differ from global, so changes to global automatically flow to all devices unless explicitly overridden. A sync toggle lets you enable or disable server synchronization per-user.
 
 ### Reverse Proxy
 
-If you run Jellyfin behind a reverse proxy (e.g., Nginx, Caddy, Traefik), make sure your proxy forwards all `/Moonfin/` paths to Jellyfin. Seerr loads inside Jellyfin through the Moonfin proxy path (`/Moonfin/Jellyseerr/Web/`). If your reverse proxy does not pass these paths through, the page can fail to load (often a black screen).
+If you run Jellyfin behind a reverse proxy (e.g., Nginx, Caddy, Traefik), make sure your proxy forwards all `/Moonfin/` paths to Jellyfin. Seerr API traffic is routed through `/Moonfin/Jellyseerr/Api/`. If your reverse proxy does not pass these paths through, Seerr integration requests can fail.
 
-Moonfin now uses a proxy-first Seerr integration: iframe and API traffic are routed through Jellyfin for seamless SSO. Some reverse proxies also add security headers (for example restrictive `frame-ancestors`/`X-Frame-Options` or CSP rules) that can block embedded content, so verify those headers if Seerr does not render.
+Moonfin uses a proxy-first Seerr integration: API traffic is routed through Jellyfin for seamless SSO. If Seerr integration does not work, verify your reverse proxy path forwarding and auth headers.
 
 ## Building from Source
 
 ### Prerequisites
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- [Node.js](https://nodejs.org/) (LTS)
+- Flutter web build output synced into `frontend/` from the separate Moonfin-Core repo
+
+If your repos are cloned in different locations, run the sync with an explicit target path:
+
+```bash
+cd /path/to/Moonfin-Core
+./build-web-plugin.sh /path/to/Plugin/frontend
+```
 
 ### Linux / macOS / Git Bash
 ```bash
@@ -161,9 +188,9 @@ Both scripts accept optional parameters:
 ```
 
 The build will:
-1. Bundle the frontend JS and CSS
-2. Compile the .NET server plugin
-3. Package `Moonfin.Server.dll` and `meta.json` into a ZIP
+1. Compile the .NET server plugin
+2. Bundle `frontend/` (if present) next to `Moonfin.Server.dll`
+3. Package release files into a ZIP
 4. Update `manifest.json` with the new checksum
 
 Output: `Moonfin.Server-{VERSION}.zip` in the repo root.
@@ -174,19 +201,13 @@ Output: `Moonfin.Server-{VERSION}.zip` in the repo root.
 ├── build.sh            # Build script (Linux/macOS/Git Bash)
 ├── build.ps1           # Build script (Windows PowerShell)
 ├── backend/            # .NET 8 Jellyfin server plugin
-│   ├── Api/            # REST controllers (settings, Jellyseerr proxy)
+│   ├── Api/            # REST controllers (settings, web host, discovery, Jellyseerr proxy)
 │   ├── Helpers/        # File Transformation patch callbacks
 │   ├── Models/         # User settings, patch payload models
 │   ├── Services/       # Startup task, settings persistence
 │   ├── Pages/          # Admin config page HTML
-│   └── Web/            # Embedded JS/CSS/HTML served to clients
-└── frontend/           # Web UI plugin source
-    ├── build.js        # JS/CSS bundler
-    └── src/
-        ├── plugin.js   # Entry point
-        ├── components/ # Details, Navbar, MediaBar, Jellyseerr, Settings
-        ├── styles/     # Component CSS
-        └── utils/      # API helpers, storage, device detection, TV nav
+│   └── Web/            # Embedded injection bridge files (loader.js/inject.html)
+└── frontend/           # Flutter web build artifacts served at /Moonfin/Web/
 ```
 
 ## API Reference
@@ -194,27 +215,38 @@ Output: `Moonfin.Server-{VERSION}.zip` in the repo root.
 | Endpoint | Method | Auth | Description |
 |----------|--------|------|-------------|
 | `/Moonfin/Ping` | GET | Yes | Check plugin status and configuration |
+| `/Moonfin/Defaults` | GET | Yes | Get admin-configured default settings profile |
 | `/Moonfin/Settings` | GET | Yes | Get current user's settings |
 | `/Moonfin/Settings` | POST | Yes | Save settings (merge or replace) |
+| `/Moonfin/Settings/Stream` | GET | Yes | SSE stream for live `settingsUpdated`, `themesChanged`, and admin message events |
 | `/Moonfin/Settings` | HEAD | Yes | Check if user has saved settings |
 | `/Moonfin/Settings` | DELETE | Yes | Delete user's settings |
+| `/Moonfin/Settings/{userId}` | GET, POST | Admin | Get/save another user's settings |
+| `/Moonfin/Admin/PushDefaults` | POST | Admin | Apply current admin defaults to all existing users |
+| `/Moonfin/Broadcast` | POST | Admin | Broadcast an admin announcement to all connected users for in-client display |
+| `/Moonfin/Settings/Profile/{profile}` | POST, DELETE | Yes | Save/delete a specific profile override |
+| `/Moonfin/Settings/Resolved/{profile}` | GET | Yes | Get resolved profile values |
+| `/Moonfin/Settings/detailsScreenBlur` and `/Moonfin/Settings/detailsScreenBlur/{profile}` | GET, POST | Yes | Get/save resolved details blur value |
+| `/Moonfin/Settings/detailsScreenOpacity` and `/Moonfin/Settings/detailsScreenOpacity/{profile}` | GET, POST | Yes | Get/save resolved details opacity value |
+| `/Moonfin/Themes` and `/Moonfin/Themes/{themeId}` | GET | Yes | List/get uploaded custom theme payloads |
+| `/Moonfin/Admin/Themes` | GET, POST | Admin | List uploaded theme metadata and upload/replace theme payload |
+| `/Moonfin/Admin/Themes/{themeId}` | DELETE | Admin | Delete uploaded custom theme |
+| `/Moonfin/Genres` | GET | Yes | List genres for media bar/settings pickers |
+| `/Moonfin/MediaBar` | GET | Yes | Get resolved media bar content for current user |
 | `/Moonfin/Jellyseerr/Config` | GET | Yes | Get Jellyseerr/Seerr configuration (auto-detects variant) |
 | `/Moonfin/Jellyseerr/Login` | POST | Yes | Authenticate with Jellyseerr/Seerr via Jellyfin credentials |
 | `/Moonfin/Jellyseerr/Status` | GET | Yes | Check current user's SSO session status |
+| `/Moonfin/Jellyseerr/Validate` | GET | Yes | Validate current SSO session against Seerr |
 | `/Moonfin/Jellyseerr/Logout` | DELETE | Yes | Clear SSO session |
-| `/Moonfin/Jellyseerr/Api/*` | * | Session | Authenticated API proxy to Jellyseerr/Seerr |
-| `/Moonfin/Jellyseerr/Web/*` | GET | Yes | Proxied web UI with injected session |
+| `/Moonfin/Jellyseerr/Api/{**path}` | GET, POST, PUT, DELETE | Session | Authenticated API proxy to Jellyseerr/Seerr |
 | `/Moonfin/Assets/{fileName}` | GET | Yes | Serve embedded rating icons |
-| `/Moonfin/MDBList/Batch` | POST | Yes | Batch fetch ratings for multiple items |
-| `/Moonfin/MDBList/{imdbId}` | GET | Yes | Get MDBList ratings for a single item |
-| `/Moonfin/MediaBar` | GET | Yes | Get resolved media bar content for the current user |
-| `/Moonfin/Genres` | GET | Yes | List all genres with IDs and localized names |
-| `/Moonfin/TMDB/Episode/{seriesId}/{seasonNumber}/{episodeNumber}` | GET | Yes | Get TMDB episode rating |
-| `/SyncPlay/List` | GET | Yes | List available SyncPlay groups |
-| `/SyncPlay/New` | POST | Yes | Create a new SyncPlay group |
-| `/SyncPlay/Join` | POST | Yes | Join an existing SyncPlay group |
-| `/SyncPlay/Leave` | POST | Yes | Leave the current SyncPlay group |
-| `/SyncPlay/{groupId}` | GET | Yes | Get details for a specific SyncPlay group |
+| `/Moonfin/MdbList/Ratings` | GET | Yes | Fetch MDBList ratings by `type` + `tmdbId` |
+| `/Moonfin/Tmdb/EpisodeRating` | GET | Yes | Fetch TMDB rating for one episode |
+| `/Moonfin/Tmdb/SeasonRatings` | GET | Yes | Fetch TMDB ratings for all episodes in a season |
+| `/Moonfin/Web/loader.js` | GET | No | Header-button loader bridge for stock Jellyfin Web |
+| `/Moonfin/Web/config.json` | GET | No | Runtime web config for plugin mode |
+| `/Moonfin/Discovery` and `/Moonfin/Discovery/discover` | GET | No | Same-origin discovery response for web mode |
+| `/Moonfin/Web/{**path}` | GET | No | Serve Moonfin Flutter web assets and SPA routes |
 
 ### Jellyseerr/Seerr Config Response
 
@@ -250,7 +282,7 @@ User settings are stored in a **profiled envelope** with a schema version, sync 
   "lastUpdated": 1740200000000,
   "lastUpdatedBy": "desktop",
   "syncEnabled": true,
-  "global": { /* base settings — all devices inherit from here */ },
+   "global": { /* base settings - all devices inherit from here */ },
   "desktop": { /* sparse overrides for desktop only */ },
   "mobile": { /* sparse overrides for mobile only */ },
   "tv": { /* sparse overrides for TV only */ }
@@ -271,8 +303,9 @@ Settings stored on the server per-user and shared across all Moonfin clients. Ea
 |---------|------|-------------|
 | `navbarEnabled` | bool | Enable custom navbar |
 | `navbarPosition` | string | Navbar position (`top`, `left`) |
-| `showClock` | bool | Show clock in navbar |
-| `use24HourClock` | bool | Use 24-hour time format |
+| `visualTheme` | string | Built-in theme selection (`moonfin`, `neon_pulse`, etc.) |
+| `customThemeId` | string | Uploaded custom theme ID selected for this profile |
+| `homeRowsStyle` | string | Home rows rendering style preset |
 | `showShuffleButton` | bool | Show shuffle button in toolbar |
 | `showGenresButton` | bool | Show genres button in toolbar |
 | `showFavoritesButton` | bool | Show favorites button in toolbar |
@@ -341,12 +374,14 @@ These settings are stored in localStorage only and do not sync across clients:
 
 - When you open Jellyfin on a **new device/browser** with no local settings, it pulls from the server and your settings follow you
 - If you change settings on **Client A**, they push to server. When **Client B** next loads (page refresh/login), it syncs but Client B's local settings win in the merge, so it won't overwrite unsaved local preferences
-- Sync only runs **once on initial page load**, not continuously, so if two clients are open simultaneously, they won't live-sync between each other
+- Clients subscribed to `/Moonfin/Settings/Stream` receive live events (`settingsUpdated`, `themesChanged`, admin messages) and can refresh without waiting for restart/login
+- Admin broadcasts are delivered to connected clients through the same stream so users can see announcements immediately in-app
+- Admin **Push Defaults To Existing Users** updates persisted global values and emits `settingsUpdated` so connected SSE clients can re-resolve immediately
 
 ### Limitations
 
 - Three-way merge resolves most conflicts, but when both clients change the **same** setting, local wins. If you change different settings on two clients, the merge picks up both changes correctly
-- No real-time push between clients (no WebSocket/polling)
+- Live update delivery only applies to clients currently connected to the SSE stream; offline clients catch up on next startup/login sync
 - Sensitive data like `mdblistApiKey` is synced to the server (stored per-user)
 
 ## Contributing

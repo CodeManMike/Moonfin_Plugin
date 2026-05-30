@@ -43,11 +43,31 @@ public class PluginConfiguration : BasePluginConfiguration
     public string? TmdbApiKey { get; set; }
 
     /// <summary>
+    /// Optional default server URL shown in the Moonfin web Add Server dialog.
+    /// </summary>
+    public string? WebDefaultServerUrl { get; set; }
+
+    /// <summary>
+    /// Optional forced server URL for Moonfin web plugin mode auto-connect.
+    /// </summary>
+    public string? WebForcedServerUrl { get; set; }
+
+    /// <summary>
+    /// Enable WebRTC private subnet scan when running Moonfin web plugin mode.
+    /// </summary>
+    public bool WebEnableWebRtcScan { get; set; } = true;
+
+    /// <summary>
     /// Admin-configured default settings for all users.
     /// Users who haven't customized a setting will inherit this value.
     /// Users can override any default in their own Moonfin settings.
     /// </summary>
     public MoonfinSettingsProfile? DefaultUserSettings { get; set; }
+
+    /// <summary>
+    /// Metadata index for uploaded custom themes stored in the plugin data folder.
+    /// </summary>
+    public List<UploadedThemeEntry> UploadedThemes { get; set; } = new();
 
     /// <summary>
     /// Gets the effective Seerr URL for server-to-server communication.
@@ -56,4 +76,18 @@ public class PluginConfiguration : BasePluginConfiguration
     {
         return JellyseerrUrl?.TrimEnd('/');
     }
+}
+
+/// <summary>
+/// Metadata for an uploaded custom theme JSON file.
+/// </summary>
+public class UploadedThemeEntry
+{
+    public string Id { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string FileName { get; set; } = string.Empty;
+    public long SizeBytes { get; set; }
+    public DateTimeOffset UploadedAtUtc { get; set; }
+    public string? UploadedByUserId { get; set; }
+    public string ChecksumSha256 { get; set; } = string.Empty;
 }

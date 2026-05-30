@@ -82,6 +82,93 @@ public class MoonfinController : ControllerBase
         });
     }
 
+    [HttpGet("Settings/Stream")]
+    [Authorize]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> StreamSettings()
+    {
+        var config = MoonfinPlugin.Instance?.Configuration;
+
+        if (config?.EnableSettingsSync != true)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { Error = "Settings sync is disabled" });
+        }
+
+        var userId = this.GetUserIdFromClaims();
+        if (userId == null)
+        {
+            return Unauthorized(new { Error = "User not authenticated" });
+        }
+
+        Response.ContentType = "text/event-stream; charset=utf-8";
+        Response.Headers.CacheControl = "no-cache";
+        Response.Headers["X-Accel-Buffering"] = "no";
+
+        var channel = _settingsService.RegisterSseChannel(userId.Value);
+
+        try
+        {
+            await Response.WriteAsync(":connected\n\n", HttpContext.RequestAborted);
+            await Response.Body.FlushAsync(HttpContext.RequestAborted);
+
+            while (!HttpContext.RequestAborted.IsCancellationRequested)
+            {
+                using var heartbeatCts = CancellationTokenSource.CreateLinkedTokenSource(HttpContext.RequestAborted);
+                heartbeatCts.CancelAfter(TimeSpan.FromSeconds(30));
+
+                bool hasData;
+                try
+                {
+                    hasData = await channel.Reader.WaitToReadAsync(heartbeatCts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    if (HttpContext.RequestAborted.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
+                    await Response.WriteAsync(":heartbeat\n\n", HttpContext.RequestAborted);
+                    await Response.Body.FlushAsync(HttpContext.RequestAborted);
+                    continue;
+                }
+
+                if (!hasData)
+                {
+                    break;
+                }
+
+                while (channel.Reader.TryRead(out var eventPayload))
+                {
+                    var payload = eventPayload;
+                    if (string.IsNullOrWhiteSpace(payload))
+                    {
+                        continue;
+                    }
+
+                    if (!payload.TrimStart().StartsWith("{", StringComparison.Ordinal))
+                    {
+                        payload = JsonSerializer.Serialize(new { type = payload });
+                    }
+
+                    await Response.WriteAsync($"data: {payload}\n\n", HttpContext.RequestAborted);
+                    await Response.Body.FlushAsync(HttpContext.RequestAborted);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            _settingsService.UnregisterSseChannel(userId.Value, channel);
+        }
+
+        return new EmptyResult();
+    }
+
     /// <summary>
     /// Gets the settings for the current authenticated user.
     /// </summary>
@@ -237,6 +324,60 @@ public class MoonfinController : ControllerBase
     }
 
     /// <summary>
+    /// Pushes configured admin default settings to all existing users (admin only).
+    /// Only non-null default fields are applied.
+    /// </summary>
+    [HttpPost("Admin/PushDefaults")]
+    [Authorize(Policy = "RequiresElevation")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<ActionResult> PushDefaultsToAllUsers()
+    {
+        var config = MoonfinPlugin.Instance?.Configuration;
+
+        if (config?.EnableSettingsSync != true)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { error = "Settings sync is disabled" });
+        }
+
+        var defaults = config.DefaultUserSettings;
+        if (defaults == null)
+        {
+            return BadRequest(new { error = "No default user settings configured" });
+        }
+
+        var usersUpdated = await _settingsService.PushDefaultsToAllUsersAsync(defaults);
+        var liveRefreshDeliveries = _settingsService.BroadcastSystemEvent("settingsUpdated");
+
+        return Ok(new { success = true, usersUpdated, liveRefreshDeliveries });
+    }
+
+    [HttpPost("Broadcast")]
+    [Authorize(Policy = "RequiresElevation")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public ActionResult BroadcastMessage([FromBody] MoonfinBroadcastRequest request)
+    {
+        var config = MoonfinPlugin.Instance?.Configuration;
+
+        if (config?.EnableSettingsSync != true)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { Error = "Settings sync is disabled" });
+        }
+
+        var message = request.Message?.Trim();
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return BadRequest(new { Error = "message is required" });
+        }
+
+        var deliveries = _settingsService.BroadcastMessage(message);
+        return Ok(new { Success = true, Deliveries = deliveries });
+    }
+
+    /// <summary>
     /// Deletes settings for the current authenticated user.
     /// </summary>
     /// <returns>Success status.</returns>
@@ -298,7 +439,7 @@ public class MoonfinController : ControllerBase
         var resolved = await _settingsService.GetResolvedProfileAsync(userId.Value, profile);
         if (resolved == null)
         {
-            // No user settings at all — return admin defaults if available
+            // No user settings at all; return admin defaults if available.
             var adminDefaults = config?.DefaultUserSettings;
             return adminDefaults != null ? Ok(adminDefaults) : NotFound(new { Error = "No settings found" });
         }
@@ -710,137 +851,6 @@ public class MoonfinController : ControllerBase
     }
 
     /// <summary>
-    /// Gets resolved home rows for the current user and profile.
-    /// Prefers Home Screen Sections rows when available, then falls back to synced Moonfin rows,
-    /// then legacy homeRowOrder conversion.
-    /// </summary>
-    [HttpGet("HomeRows")]
-    [HttpGet("HomeRows/{profile}")]
-    [Authorize]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-    public async Task<ActionResult<MoonfinHomeRowsResponse>> GetHomeRows(
-        [FromRoute] string? profile = null,
-        [FromQuery] string? language = null)
-    {
-        var config = MoonfinPlugin.Instance?.Configuration;
-
-        if (config?.EnableSettingsSync != true)
-        {
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { Error = "Settings sync is disabled" });
-        }
-
-        var userId = this.GetUserIdFromClaims();
-        if (userId == null)
-        {
-            return Unauthorized(new { Error = "User not authenticated" });
-        }
-
-        var resolvedProfileName = string.IsNullOrWhiteSpace(profile) ? "global" : profile.ToLowerInvariant();
-        if (!MoonfinUserSettings.ValidProfiles.Contains(resolvedProfileName))
-        {
-            return BadRequest(new { Error = $"Invalid profile: {resolvedProfileName}. Valid profiles: {string.Join(", ", MoonfinUserSettings.ValidProfiles)}" });
-        }
-
-        var resolved = await _settingsService.GetResolvedProfileAsync(userId.Value, resolvedProfileName)
-            ?? config?.DefaultUserSettings
-            ?? new MoonfinSettingsProfile();
-
-        var response = new MoonfinHomeRowsResponse
-        {
-            Profile = resolvedProfileName,
-            Source = "moonfin",
-            Rows = []
-        };
-
-        var rowsV2 = NormalizeRows(resolved.HomeRowsV2);
-        var configuredSource = string.IsNullOrWhiteSpace(resolved.HomeRowsSource)
-            ? null
-            : resolved.HomeRowsSource.Trim().ToLowerInvariant();
-
-        if (configuredSource == "kefintweaks" && rowsV2.Count > 0)
-        {
-            response.Source = "kefintweaks";
-            response.Rows = rowsV2;
-            return Ok(response);
-        }
-
-        var hssRows = await TryGetHssRowsAsync(userId.Value, language);
-        if (hssRows != null && hssRows.Count > 0)
-        {
-            response.Source = "hss";
-            response.Rows = hssRows;
-            return Ok(response);
-        }
-
-        if (rowsV2.Count > 0)
-        {
-            response.Source = configuredSource ?? "moonfin";
-            response.Rows = rowsV2;
-            return Ok(response);
-        }
-
-        response.Source = "legacy";
-        response.Rows = ConvertLegacyHomeRowOrder(resolved.HomeRowOrder);
-        return Ok(response);
-    }
-
-    /// <summary>
-    /// Saves home rows for a specific profile for the current user.
-    /// </summary>
-    [HttpPost("HomeRows")]
-    [HttpPost("HomeRows/{profile}")]
-    [Authorize]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-    public async Task<ActionResult<MoonfinSaveResponse>> SaveHomeRows(
-        [FromBody] MoonfinSaveHomeRowsRequest request,
-        [FromRoute] string? profile = null)
-    {
-        var config = MoonfinPlugin.Instance?.Configuration;
-
-        if (config?.EnableSettingsSync != true)
-        {
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { Error = "Settings sync is disabled" });
-        }
-
-        var userId = this.GetUserIdFromClaims();
-        if (userId == null)
-        {
-            return Unauthorized(new { Error = "User not authenticated" });
-        }
-
-        var targetProfile = string.IsNullOrWhiteSpace(profile)
-            ? (string.IsNullOrWhiteSpace(request.Profile) ? "global" : request.Profile.ToLowerInvariant())
-            : profile.ToLowerInvariant();
-
-        if (!MoonfinUserSettings.ValidProfiles.Contains(targetProfile))
-        {
-            return BadRequest(new { Error = $"Invalid profile: {targetProfile}. Valid profiles: {string.Join(", ", MoonfinUserSettings.ValidProfiles)}" });
-        }
-
-        var normalizedRows = NormalizeRows(request.Rows);
-        var profilePatch = new MoonfinSettingsProfile
-        {
-            HomeRowsV2 = normalizedRows.Count > 0 ? normalizedRows : null,
-            HomeRowsSource = string.IsNullOrWhiteSpace(request.Source) ? null : request.Source,
-            HomeRowOrder = request.HomeRowOrder is { Count: > 0 } ? request.HomeRowOrder : null
-        };
-
-        var existed = _settingsService.UserSettingsExist(userId.Value);
-        await _settingsService.SaveProfileAsync(userId.Value, targetProfile, profilePatch, request.ClientId ?? "moonfin-homeRows-endpoint");
-
-        return Ok(new MoonfinSaveResponse
-        {
-            Success = true,
-            Created = !existed,
-            UserId = userId.Value
-        });
-    }
-
-    /// <summary>
     /// Gets resolved media bar content for the current user.
     /// Combines user settings resolution with server-side item queries so all clients
     /// (web, Android, TV) get identical results from a single call.
@@ -943,239 +953,6 @@ public class MoonfinController : ControllerBase
             ImageTags = imageTags,
             BackdropImageTags = backdropTags
         };
-    }
-
-    private static List<MoonfinCustomHomeRow> NormalizeRows(List<MoonfinCustomHomeRow>? rows)
-    {
-        if (rows == null || rows.Count == 0)
-        {
-            return [];
-        }
-
-        return rows
-            .Where(r => r != null)
-            .OrderBy(r => r.Order ?? int.MaxValue)
-            .Select((r, index) => new MoonfinCustomHomeRow
-            {
-                Id = r.Id,
-                Title = r.Title,
-                Kind = r.Kind,
-                Source = r.Source,
-                Enabled = r.Enabled ?? true,
-                Order = r.Order ?? index,
-                Route = r.Route,
-                ViewMode = r.ViewMode,
-                AdditionalData = r.AdditionalData
-            })
-            .Where(r => r.Enabled != false)
-            .ToList();
-    }
-
-    private static List<MoonfinCustomHomeRow> ConvertLegacyHomeRowOrder(List<string>? homeRowOrder)
-    {
-        if (homeRowOrder == null || homeRowOrder.Count == 0)
-        {
-            return [];
-        }
-
-        return homeRowOrder
-            .Where(v => !string.IsNullOrWhiteSpace(v) && !string.Equals(v, "none", StringComparison.OrdinalIgnoreCase))
-            .Select((value, index) => new MoonfinCustomHomeRow
-            {
-                Id = value,
-                Title = value,
-                Kind = "builtin",
-                Source = "jellyfin",
-                Enabled = true,
-                Order = index
-            })
-            .ToList();
-    }
-
-    private async Task<List<MoonfinCustomHomeRow>?> TryGetHssRowsAsync(Guid userId, string? language)
-    {
-        var scheme = Request.Scheme;
-        var host = Request.Host.HasValue ? Request.Host.Value : null;
-        if (string.IsNullOrWhiteSpace(host))
-        {
-            return null;
-        }
-
-        var basePath = Request.PathBase.HasValue ? Request.PathBase.Value : string.Empty;
-        var baseUrl = $"{scheme}://{host}{basePath}";
-        var authHeader = Request.Headers.Authorization.ToString();
-        var tokenHeader = Request.Headers["X-Emby-Token"].ToString();
-        var apiKey = Request.Query.TryGetValue("api_key", out var apiKeyValues)
-            ? apiKeyValues.ToString()
-            : null;
-
-        if (string.IsNullOrWhiteSpace(tokenHeader) && !string.IsNullOrWhiteSpace(apiKey))
-        {
-            tokenHeader = apiKey;
-        }
-
-        if (string.IsNullOrWhiteSpace(authHeader) && string.IsNullOrWhiteSpace(tokenHeader))
-        {
-            return null;
-        }
-
-        try
-        {
-            using var client = _httpClientFactory.CreateClient();
-            client.Timeout = TimeSpan.FromSeconds(5);
-
-            using var metaReq = new HttpRequestMessage(HttpMethod.Get, $"{baseUrl}/HomeScreen/Meta");
-            if (!string.IsNullOrWhiteSpace(authHeader))
-            {
-                metaReq.Headers.TryAddWithoutValidation("Authorization", authHeader);
-            }
-            if (!string.IsNullOrWhiteSpace(tokenHeader))
-            {
-                metaReq.Headers.TryAddWithoutValidation("X-Emby-Token", tokenHeader);
-            }
-            using var metaResp = await client.SendAsync(metaReq);
-            if (!metaResp.IsSuccessStatusCode)
-            {
-                return null;
-            }
-
-            using var metaDoc = JsonDocument.Parse(await metaResp.Content.ReadAsStringAsync());
-            if (!TryGetBoolean(metaDoc.RootElement, "enabled", out var enabled) || !enabled)
-            {
-                return [];
-            }
-
-            var lang = string.IsNullOrWhiteSpace(language) ? "en" : language;
-            var sectionsUrl = $"{baseUrl}/HomeScreen/Sections?UserId={Uri.EscapeDataString(userId.ToString())}&Language={Uri.EscapeDataString(lang)}";
-            using var sectionsReq = new HttpRequestMessage(HttpMethod.Get, sectionsUrl);
-            if (!string.IsNullOrWhiteSpace(authHeader))
-            {
-                sectionsReq.Headers.TryAddWithoutValidation("Authorization", authHeader);
-            }
-            if (!string.IsNullOrWhiteSpace(tokenHeader))
-            {
-                sectionsReq.Headers.TryAddWithoutValidation("X-Emby-Token", tokenHeader);
-            }
-            using var sectionsResp = await client.SendAsync(sectionsReq);
-            if (!sectionsResp.IsSuccessStatusCode)
-            {
-                return null;
-            }
-
-            using var sectionsDoc = JsonDocument.Parse(await sectionsResp.Content.ReadAsStringAsync());
-            if (!TryGetItemsArray(sectionsDoc.RootElement, out var itemsArray))
-            {
-                return [];
-            }
-
-            var rows = new List<MoonfinCustomHomeRow>();
-            var index = 0;
-            foreach (var item in itemsArray.EnumerateArray())
-            {
-                var sectionId = GetString(item, "section") ?? GetString(item, "id") ?? $"hss-section-{index}";
-                var title = GetString(item, "displayText") ?? GetString(item, "name") ?? sectionId;
-                rows.Add(new MoonfinCustomHomeRow
-                {
-                    Id = $"hss-{sectionId}",
-                    Title = title,
-                    Kind = "custom",
-                    Source = "hss",
-                    Enabled = true,
-                    Order = index,
-                    Route = GetString(item, "route"),
-                    ViewMode = GetString(item, "viewMode"),
-                    AdditionalData = item.GetRawText()
-                });
-                index++;
-            }
-
-            return rows;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private static bool TryGetItemsArray(JsonElement root, out JsonElement itemsArray)
-    {
-        itemsArray = default;
-        if (root.ValueKind != JsonValueKind.Object)
-        {
-            return false;
-        }
-
-        if (root.TryGetProperty("items", out var lowerItems) && lowerItems.ValueKind == JsonValueKind.Array)
-        {
-            itemsArray = lowerItems;
-            return true;
-        }
-
-        if (root.TryGetProperty("Items", out var upperItems) && upperItems.ValueKind == JsonValueKind.Array)
-        {
-            itemsArray = upperItems;
-            return true;
-        }
-
-        return false;
-    }
-
-    private static bool TryGetBoolean(JsonElement element, string key, out bool value)
-    {
-        value = false;
-        if (element.ValueKind != JsonValueKind.Object)
-        {
-            return false;
-        }
-
-        if (!TryGetPropertyIgnoreCase(element, key, out var prop))
-        {
-            return false;
-        }
-
-        if (prop.ValueKind == JsonValueKind.True)
-        {
-            value = true;
-            return true;
-        }
-
-        if (prop.ValueKind == JsonValueKind.False)
-        {
-            value = false;
-            return true;
-        }
-
-        return false;
-    }
-
-    private static string? GetString(JsonElement element, string key)
-    {
-        if (!TryGetPropertyIgnoreCase(element, key, out var prop))
-        {
-            return null;
-        }
-
-        return prop.ValueKind == JsonValueKind.String ? prop.GetString() : null;
-    }
-
-    private static bool TryGetPropertyIgnoreCase(JsonElement element, string key, out JsonElement value)
-    {
-        value = default;
-        if (element.ValueKind != JsonValueKind.Object)
-        {
-            return false;
-        }
-
-        foreach (var prop in element.EnumerateObject())
-        {
-            if (string.Equals(prop.Name, key, StringComparison.OrdinalIgnoreCase))
-            {
-                value = prop.Value;
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private static bool HasBackdropImage(BaseItem item)
@@ -1670,22 +1447,6 @@ public class MoonfinSaveResponse
     public Guid UserId { get; set; }
 }
 
-public class MoonfinHomeRowsResponse
-{
-    public string Profile { get; set; } = "global";
-    public string Source { get; set; } = "moonfin";
-    public List<MoonfinCustomHomeRow> Rows { get; set; } = [];
-}
-
-public class MoonfinSaveHomeRowsRequest
-{
-    public string? Profile { get; set; }
-    public string? Source { get; set; }
-    public List<MoonfinCustomHomeRow>? Rows { get; set; }
-    public List<string>? HomeRowOrder { get; set; }
-    public string? ClientId { get; set; }
-}
-
 public class MoonfinDetailsScreenBlurRequest
 {
     public string? Profile { get; set; }
@@ -1724,4 +1485,9 @@ public class MoonfinDetailsScreenOpacitySaveResponse : MoonfinDetailsScreenOpaci
     public bool Success { get; set; }
     public bool Created { get; set; }
     public Guid UserId { get; set; }
+}
+
+public class MoonfinBroadcastRequest
+{
+    public string? Message { get; set; }
 }
