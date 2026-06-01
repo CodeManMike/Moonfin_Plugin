@@ -9,6 +9,15 @@
     "imageUrl": "https://raw.githubusercontent.com/Moonfin-Client/Plugin/master/backend/assets/logo.png",
     "versions": [
       {
+        "version": "1.9.0.0",
+        "changelog": "## Features\n\n- Refreshed the Moonfin plugin, now called Moonbase, experience with the Moonfin Flutter web app, now served from `/Moonfin/Web/`.\n- Replaced the older JavaScript overlay frontend with a proper web client bundled from the Flutter web project at the Moonfin-Core repo and theme assets for a smoother setup.\n- Added a built-in theme editor at `/Moonfin/Web/theme/`, including admin-managed custom theme uploads and validation.\n- Added discovery endpoints for plugin web startup: `/Moonfin/Discovery` and `/Moonfin/Discovery/discover`.\n- Added custom theme APIs and services for listing, retrieving, uploading or replacing, deleting, and validating themes.\n- Improved settings sync and admin tools with better global/profile behavior and admin broadcast support.",
+        "targetAbi": "10.10.0.0",
+        "sourceUrl": "https://github.com/Moonfin-Client/Plugin/releases/download/1.9.0/Moonfin.Server-1.9.0.0.zip",
+        "checksum": "BCFEC3007BCCA81F535594FA8332FD3F",
+        "timestamp": "2026-06-01T02:47:41",
+        "dependencies": []
+      },
+      {
         "version": "1.8.2.0",
         "changelog": "## Features\n\n- Added Media Bar Enhanced support in desktop media bar settings. (#98)\n- Clicking a row item now navigates to the correct library, and playback from the Continue Watching row works properly again. (#60)\n\n## Bug Fixes\n\n- Details page buttons were too large on some screens — they've been resized to something more reasonable. (#100)\n- Clicking items from third-party home screen section plugins no longer incorrectly triggers Moonfin's custom detail page. (#96)\n- Admin default settings now correctly propagate to existing users when changed. (#101)\n- The Jellyseerr discover page was crashing to an error screen because the proxy was wrapping responses in an unexpected JSON envelope. That's fixed now. (#108)\n- The global profile now saves reliably, the media bar state persists correctly across Moonfin and Paradox themes, and users no longer see genres or library sections they don't have access to. (#87)",
         "targetAbi": "10.10.0.0",
