@@ -151,7 +151,7 @@
                         <h3 class="sectionTitle">Seerr Integration</h3>
                         <div class="checkboxContainer checkboxContainer-withDescription">
                             <label class="emby-checkbox-label">
-                                <input type="checkbox" id="JellyseerrEnabled" is="emby-checkbox" />
+                                <input type="checkbox" id="SeerrEnabled" is="emby-checkbox" />
                                 <span>Enable Seerr</span>
                             </label>
                             <div class="fieldDescription">
@@ -159,17 +159,28 @@
                             </div>
                         </div>
                         <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="JellyseerrUrl">Seerr URL</label>
-                            <input type="url" id="JellyseerrUrl" is="emby-input" placeholder="https://seerr.example.com" />
+                            <label class="inputLabel inputLabelUnfocused" for="SeerrUrl">Seerr URL</label>
+                            <input type="url" id="SeerrUrl" is="emby-input" placeholder="https://seerr.example.com" />
                             <div class="fieldDescription">
-                                The URL Jellyfin can reach for your Seerr instance.
-                                Moonfin always uses the server-side proxy for API requests to keep SSO seamless.
-                                If Jellyfin is behind a reverse proxy, forward all <code>/Moonfin/</code> paths to Jellyfin.
+                                <strong>Where Jellyfin can reach your Seerr server.</strong>
+                                Start the address with <code>http://</code> or <code>https://</code>. Examples:
+                                <ul style="margin: 0.4em 0 0.4em 1.2em;">
+                                    <li><code>http://192.168.1.10:5055</code> (another machine on your network)</li>
+                                    <li><code>http://seerr:5055</code> (Docker, on the same network as Jellyfin)</li>
+                                    <li><code>https://requests.example.com</code> (a public address)</li>
+                                </ul>
+                                This is the address the <em>Jellyfin server</em> connects to behind the scenes, not the one you
+                                open in a web browser, so a local network or Docker address works fine. You do not enter a
+                                username, password, or API key here; people sign in later from the app.
+                                <br /><br />
+                                <strong>Advanced:</strong> If a reverse proxy in front of Seerr shows its own login page,
+                                let the Jellyfin server through it. If Jellyfin itself sits behind a reverse proxy, make sure
+                                that proxy forwards <code>/Moonfin/</code> requests to Jellyfin.
                             </div>
                         </div>
                         <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="JellyseerrDisplayName">Display Name (Optional)</label>
-                            <input type="text" id="JellyseerrDisplayName" is="emby-input" placeholder="Auto-detected" />
+                            <label class="inputLabel inputLabelUnfocused" for="SeerrDisplayName">Display Name (Optional)</label>
+                            <input type="text" id="SeerrDisplayName" is="emby-input" placeholder="Auto-detected" />
                             <div class="fieldDescription">
                                 <strong>Optional override.</strong> The name shown in the UI (e.g., "Requests", "Media Requests").
                                 Leave blank to auto-detect from the configured URL.
@@ -179,7 +190,7 @@
                         <div style="background-color: rgba(0, 164, 220, 0.1); border-left: 4px solid #00a4dc; border-radius: 4px; padding: 1em 1.5em; margin: 1em 0;">
                             <strong>SSO Proxy:</strong> When Seerr is enabled, Moonfin provides single sign-on.
                             Users authenticate once with their Jellyfin credentials, and the session is stored server-side.
-                            All Moonfin clients access Seerr API through <code>/Moonfin/Jellyseerr/Api/</code>
+                            All Moonfin clients access Seerr API through <code>/Moonfin/Seerr/Api/</code>
                             without re-authenticating.
                         </div>
                     </div>
@@ -599,8 +610,8 @@
                             <div id="DefaultMdblistRatingSourcesList" style="border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:4px;"></div>
                         </div>
                         <div class="inputContainer">
-                            <label class="inputLabel inputLabelUnfocused" for="DefaultJellyseerrBlockNsfw">Block NSFW In Seerr</label>
-                            <select id="DefaultJellyseerrBlockNsfw" is="emby-select">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultSeerrBlockNsfw">Block NSFW In Seerr</label>
+                            <select id="DefaultSeerrBlockNsfw" is="emby-select">
                                 <option value="">Not set (user decides)</option>
                                 <option value="true">Yes</option>
                                 <option value="false">No</option>
@@ -1484,9 +1495,9 @@
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(MoonfinConfig.pluginUniqueId).then(function(config) {
                     document.querySelector('#EnableSettingsSync').checked = config.EnableSettingsSync;
-                    document.querySelector('#JellyseerrEnabled').checked = config.JellyseerrEnabled;
-                    document.querySelector('#JellyseerrUrl').value = config.JellyseerrUrl || '';
-                    document.querySelector('#JellyseerrDisplayName').value = config.JellyseerrDisplayName || '';
+                    document.querySelector('#SeerrEnabled').checked = config.SeerrEnabled;
+                    document.querySelector('#SeerrUrl').value = config.SeerrUrl || '';
+                    document.querySelector('#SeerrDisplayName').value = config.SeerrDisplayName || '';
                     document.querySelector('#MdblistApiKey').value = config.MdblistApiKey || '';
                     document.querySelector('#TmdbApiKey').value = config.TmdbApiKey || '';
                     document.querySelector('#WebDefaultServerUrl').value = config.WebDefaultServerUrl || '';
@@ -1538,7 +1549,7 @@
                     document.querySelector('#DefaultTmdbEpisodeRatingsEnabled').checked = !!defaults.tmdbEpisodeRatingsEnabled;
                     setNullableBoolSelect('#DefaultMdblistShowRatingBadges', defaults.mdblistShowRatingBadges);
                     loadRatingSourcesPicker(defaults.mdblistRatingSources || null);
-                    setNullableBoolSelect('#DefaultJellyseerrBlockNsfw', defaults.jellyseerrBlockNsfw);
+                    setNullableBoolSelect('#DefaultSeerrBlockNsfw', defaults.seerrBlockNsfw);
 
                     var sourceSelect = document.querySelector('#DefaultMediaBarSourceType');
                     var collectionPickerSection = document.querySelector('#DefaultCollectionPickerSection');
@@ -1673,9 +1684,9 @@
                 function submit() {
                     return ApiClient.getPluginConfiguration(MoonfinConfig.pluginUniqueId).then(function(config) {
                         config.EnableSettingsSync = document.querySelector('#EnableSettingsSync').checked;
-                        config.JellyseerrEnabled = document.querySelector('#JellyseerrEnabled').checked;
-                        config.JellyseerrUrl = document.querySelector('#JellyseerrUrl').value || null;
-                        config.JellyseerrDisplayName = document.querySelector('#JellyseerrDisplayName').value || null;
+                        config.SeerrEnabled = document.querySelector('#SeerrEnabled').checked;
+                        config.SeerrUrl = document.querySelector('#SeerrUrl').value || null;
+                        config.SeerrDisplayName = document.querySelector('#SeerrDisplayName').value || null;
                         config.MdblistApiKey = document.querySelector('#MdblistApiKey').value || null;
                         config.TmdbApiKey = document.querySelector('#TmdbApiKey').value || null;
                         config.WebDefaultServerUrl = document.querySelector('#WebDefaultServerUrl').value || null;
@@ -1746,7 +1757,7 @@
                         config.DefaultUserSettings.tmdbEpisodeRatingsEnabled = document.querySelector('#DefaultTmdbEpisodeRatingsEnabled').checked;
                         config.DefaultUserSettings.mdblistShowRatingBadges = getNullableBoolSelect('#DefaultMdblistShowRatingBadges');
                         config.DefaultUserSettings.mdblistRatingSources = getRatingSourcesValue();
-                        config.DefaultUserSettings.jellyseerrBlockNsfw = getNullableBoolSelect('#DefaultJellyseerrBlockNsfw');
+                        config.DefaultUserSettings.seerrBlockNsfw = getNullableBoolSelect('#DefaultSeerrBlockNsfw');
 
                         return ApiClient.updatePluginConfiguration(MoonfinConfig.pluginUniqueId, config).then(function(result) {
                             Dashboard.processPluginConfigurationUpdateResult(result);

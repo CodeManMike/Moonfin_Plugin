@@ -7,18 +7,20 @@ using Moonfin.Server.Services;
 namespace Moonfin.Server.Api;
 
 /// <summary>
-/// API controller for Jellyseerr SSO proxy.
+/// API controller for Seerr SSO proxy.
 /// Handles authentication, session management, and API proxying so that
-/// any Moonfin client can access Jellyseerr through the Jellyfin server.
+/// any Moonfin client can access Seerr through the Jellyfin server.
 /// </summary>
 [ApiController]
+[Route("Moonfin/Seerr")]
+// Legacy alias kept active so older clients keep working while they migrate to /Moonfin/Seerr.
 [Route("Moonfin/Jellyseerr")]
 [Produces(MediaTypeNames.Application.Json)]
-public class JellyseerrProxyController : ControllerBase
+public class SeerrProxyController : ControllerBase
 {
-    private readonly JellyseerrSessionService _sessionService;
+    private readonly SeerrSessionService _sessionService;
 
-    public JellyseerrProxyController(JellyseerrSessionService sessionService)
+    public SeerrProxyController(SeerrSessionService sessionService)
     {
         _sessionService = sessionService;
     }
@@ -36,11 +38,11 @@ public class JellyseerrProxyController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
-    public async Task<IActionResult> Login([FromBody] JellyseerrLoginRequest request)
+    public async Task<IActionResult> Login([FromBody] SeerrLoginRequest request)
     {
         var config = MoonfinPlugin.Instance?.Configuration;
-        var jellyseerrUrl = config?.GetEffectiveJellyseerrUrl();
-        if (config?.JellyseerrEnabled != true || string.IsNullOrEmpty(jellyseerrUrl))
+        var seerrUrl = config?.GetEffectiveSeerrUrl();
+        if (config?.SeerrEnabled != true || string.IsNullOrEmpty(seerrUrl))
         {
             return StatusCode(StatusCodes.Status503ServiceUnavailable,
                 new { error = "Seerr integration is not enabled" });
@@ -73,7 +75,8 @@ public class JellyseerrProxyController : ControllerBase
         return Ok(new
         {
             success = true,
-            jellyseerrUserId = result.JellyseerrUserId,
+            seerrUserId = result.SeerrUserId,
+            jellyseerrUserId = result.SeerrUserId, // legacy alias for pre-rename clients
             displayName = result.DisplayName,
             avatar = result.Avatar,
             permissions = result.Permissions
@@ -90,8 +93,8 @@ public class JellyseerrProxyController : ControllerBase
     public async Task<IActionResult> GetStatus()
     {
         var config = MoonfinPlugin.Instance?.Configuration;
-        var jellyseerrUrl = config?.GetEffectiveJellyseerrUrl();
-        if (config?.JellyseerrEnabled != true || string.IsNullOrEmpty(jellyseerrUrl))
+        var seerrUrl = config?.GetEffectiveSeerrUrl();
+        if (config?.SeerrEnabled != true || string.IsNullOrEmpty(seerrUrl))
         {
             return Ok(new
             {
@@ -108,7 +111,7 @@ public class JellyseerrProxyController : ControllerBase
             {
                 enabled = true,
                 authenticated = false,
-                url = jellyseerrUrl
+                url = seerrUrl
             });
         }
 
@@ -118,8 +121,9 @@ public class JellyseerrProxyController : ControllerBase
         {
             enabled = true,
             authenticated = session != null,
-            url = jellyseerrUrl,
-            jellyseerrUserId = session?.JellyseerrUserId,
+            url = seerrUrl,
+            seerrUserId = session?.SeerrUserId,
+            jellyseerrUserId = session?.SeerrUserId, // legacy alias for pre-rename clients
             displayName = session?.DisplayName,
             avatar = session?.Avatar,
             permissions = session?.Permissions ?? 0,
@@ -224,8 +228,8 @@ public class JellyseerrProxyController : ControllerBase
     private async Task<IActionResult> ProxyApiRequest(HttpMethod method, string path)
     {
         var config = MoonfinPlugin.Instance?.Configuration;
-        var jellyseerrUrl = config?.GetEffectiveJellyseerrUrl();
-        if (config?.JellyseerrEnabled != true || string.IsNullOrEmpty(jellyseerrUrl))
+        var seerrUrl = config?.GetEffectiveSeerrUrl();
+        if (config?.SeerrEnabled != true || string.IsNullOrEmpty(seerrUrl))
         {
             return StatusCode(StatusCodes.Status503ServiceUnavailable,
                 new { error = "Seerr integration is not enabled" });
@@ -273,7 +277,7 @@ public class JellyseerrProxyController : ControllerBase
 /// <summary>
 /// Request body for Seerr login.
 /// </summary>
-public class JellyseerrLoginRequest
+public class SeerrLoginRequest
 {
     /// <summary>Username (Jellyfin or local Seerr account).</summary>
     public string? Username { get; set; }

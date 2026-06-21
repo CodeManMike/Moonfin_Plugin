@@ -27,6 +27,11 @@ public class MoonfinPlugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
         Instance = this;
         ServiceProvider = serviceProvider;
+
+        if (Configuration.MigrateLegacyKeys())
+        {
+            SaveConfiguration();
+        }
     }
 
     /// <inheritdoc />

@@ -12,17 +12,31 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("desktopMediaBarProvider")]
     public string? DesktopMediaBarProvider { get; set; }
 
+    [JsonPropertyName("seerrEnabled")]
+    public bool? SeerrEnabled { get; set; }
+
+    [JsonPropertyName("seerrApiKey")]
+    public string? SeerrApiKey { get; set; }
+
+    [JsonPropertyName("seerrBlockNsfw")]
+    public bool? SeerrBlockNsfw { get; set; }
+
+    [JsonPropertyName("seerrRows")]
+    public SeerrRowsConfig? SeerrRows { get; set; }
+
+    // Legacy jellyseerr* aliases: read old payloads and keep serializing the old keys so
+    // clients that haven't migrated to the seerr* keys keep working. Backed by the Seerr* props.
     [JsonPropertyName("jellyseerrEnabled")]
-    public bool? JellyseerrEnabled { get; set; }
+    public bool? JellyseerrEnabledCompat { get => SeerrEnabled; set { if (value != null) { SeerrEnabled = value; } } }
 
     [JsonPropertyName("jellyseerrApiKey")]
-    public string? JellyseerrApiKey { get; set; }
+    public string? JellyseerrApiKeyCompat { get => SeerrApiKey; set { if (value != null) { SeerrApiKey = value; } } }
 
     [JsonPropertyName("jellyseerrBlockNsfw")]
-    public bool? JellyseerrBlockNsfw { get; set; }
+    public bool? JellyseerrBlockNsfwCompat { get => SeerrBlockNsfw; set { if (value != null) { SeerrBlockNsfw = value; } } }
 
     [JsonPropertyName("jellyseerrRows")]
-    public JellyseerrRowsConfig? JellyseerrRows { get; set; }
+    public SeerrRowsConfig? JellyseerrRowsCompat { get => SeerrRows; set { if (value != null) { SeerrRows = value; } } }
 
     [JsonPropertyName("mdblistEnabled")]
     public bool? MdblistEnabled { get; set; }

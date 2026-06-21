@@ -25,15 +25,9 @@ public class MoonfinController : ControllerBase
     private const int MaxDetailsBackdropBlur = 40;
 
     private readonly MoonfinSettingsService _settingsService;
-    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILibraryManager _libraryManager;
     private readonly ILogger<MoonfinController> _logger;
     
-    // Cache for auto-detected variant
-    private static string? _cachedVariant;
-    private static string? _cachedVariantUrl;
-    private static DateTime _variantCacheExpiry = DateTime.MinValue;
-    private static readonly SemaphoreSlim _variantLock = new(1, 1);
     private static readonly Type? _userManagerType = Type.GetType("MediaBrowser.Controller.Library.IUserManager, MediaBrowser.Controller");
     private static readonly MethodInfo? _userManagerGetUserById = _userManagerType?.GetMethod("GetUserById", [typeof(Guid)]);
     private static readonly PropertyInfo? _userManagerUsersProperty = _userManagerType?.GetProperty("Users");
@@ -46,12 +40,10 @@ public class MoonfinController : ControllerBase
 
     public MoonfinController(
         MoonfinSettingsService settingsService,
-        IHttpClientFactory httpClientFactory,
         ILibraryManager libraryManager,
         ILogger<MoonfinController> logger)
     {
         _settingsService = settingsService;
-        _httpClientFactory = httpClientFactory;
         _libraryManager = libraryManager;
         _logger = logger;
     }
@@ -73,9 +65,9 @@ public class MoonfinController : ControllerBase
             Version = MoonfinPlugin.Instance?.Version.ToString() ?? "1.0.0.0",
             SettingsSyncEnabled = config?.EnableSettingsSync ?? false,
             ServerName = "Jellyfin",
-            JellyseerrEnabled = config?.JellyseerrEnabled ?? false,
-            JellyseerrUrl = (config?.JellyseerrEnabled == true)
-                ? config.JellyseerrUrl
+            SeerrEnabled = config?.SeerrEnabled ?? false,
+            SeerrUrl = (config?.SeerrEnabled == true)
+                ? config.SeerrUrl
                 : null,
             MdblistAvailable = !string.IsNullOrWhiteSpace(config?.MdblistApiKey),
             TmdbAvailable = !string.IsNullOrWhiteSpace(config?.TmdbApiKey),
@@ -1366,10 +1358,12 @@ public class MoonfinController : ControllerBase
     /// <summary>
     /// Gets the Seerr configuration (admin URL + user enablement).
     /// </summary>
+    [HttpGet("Seerr/Config")]
+    // Legacy alias kept active so older clients keep working while they migrate to /Moonfin/Seerr.
     [HttpGet("Jellyseerr/Config")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult<JellyseerrConfigResponse>> GetJellyseerrConfig()
+    public async Task<ActionResult<SeerrConfigResponse>> GetSeerrConfig()
     {
         var config = MoonfinPlugin.Instance?.Configuration;
         
@@ -1381,110 +1375,24 @@ public class MoonfinController : ControllerBase
             userSettings = await _settingsService.GetUserSettingsAsync(userId.Value);
         }
 
-        // Auto-detect variant from the API
-        var jellyseerrUrl = config?.GetEffectiveJellyseerrUrl();
-        var variant = await DetectVariantAsync(jellyseerrUrl);
-        
-        // Use admin display name if set, otherwise auto-generate from variant
-        var displayName = config?.JellyseerrDisplayName;
+        var displayName = config?.SeerrDisplayName;
         if (string.IsNullOrWhiteSpace(displayName))
         {
             displayName = "Seerr";
         }
 
-        var userJellyseerrEnabled = userSettings?.Global?.JellyseerrEnabled 
-            ?? userSettings?.JellyseerrEnabled  // legacy v1
+        var userSeerrEnabled = userSettings?.Global?.SeerrEnabled
+            ?? userSettings?.SeerrEnabled  // legacy v1
             ?? true;
 
-        return Ok(new JellyseerrConfigResponse
+        return Ok(new SeerrConfigResponse
         {
-            Enabled = config?.JellyseerrEnabled ?? false,
-            Url = config?.JellyseerrUrl,
+            Enabled = config?.SeerrEnabled ?? false,
+            Url = config?.SeerrUrl,
             DisplayName = displayName,
-            Variant = variant,
-            UserEnabled = userJellyseerrEnabled
+            Variant = "seerr",
+            UserEnabled = userSeerrEnabled
         });
-    }
-    
-    /// <summary>
-    /// Auto-detect whether the configured URL is Seerr or legacy Jellyseerr by calling the status API.
-    /// Results are cached for 1 hour or until the URL changes.
-    /// </summary>
-    private async Task<string> DetectVariantAsync(string? jellyseerrUrl)
-    {
-        if (string.IsNullOrEmpty(jellyseerrUrl))
-        {
-            return "seerr";
-        }
-        
-        if (_cachedVariant != null && 
-            _cachedVariantUrl == jellyseerrUrl && 
-            DateTime.UtcNow < _variantCacheExpiry)
-        {
-            return _cachedVariant;
-        }
-        
-        await _variantLock.WaitAsync();
-        try
-        {
-            // Double-check cache after acquiring lock
-            if (_cachedVariant != null && 
-                _cachedVariantUrl == jellyseerrUrl && 
-                DateTime.UtcNow < _variantCacheExpiry)
-            {
-                return _cachedVariant;
-            }
-            
-            var variant = "seerr";
-            
-            try
-            {
-                var client = _httpClientFactory.CreateClient();
-                client.Timeout = TimeSpan.FromSeconds(5);
-                
-                var response = await client.GetAsync($"{jellyseerrUrl}/api/v1/status");
-                if (response.IsSuccessStatusCode)
-                {
-                    var json = await response.Content.ReadAsStringAsync();
-                    
-                    // Seerr uses version >= 3.0.0, Jellyseerr uses version < 3.0.0
-                    try
-                    {
-                        using var doc = JsonDocument.Parse(json);
-                        if (doc.RootElement.TryGetProperty("version", out var versionEl))
-                        {
-                            var versionStr = versionEl.GetString();
-                            if (!string.IsNullOrEmpty(versionStr))
-                            {
-                                var parts = versionStr.Split('.');
-                                if (parts.Length >= 1 && int.TryParse(parts[0], out var major) && major >= 3)
-                                {
-                                    variant = "seerr";
-                                }
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        // JSON parse error - use default
-                    }
-                }
-            }
-            catch
-            {
-                // Network error - use default
-            }
-            
-            _cachedVariant = variant;
-            _cachedVariantUrl = jellyseerrUrl;
-            _variantCacheExpiry = DateTime.UtcNow.AddHours(1);
-            
-            return variant;
-        }
-        finally
-        {
-            _variantLock.Release();
-        }
     }
 }
 
@@ -1497,17 +1405,21 @@ public class MoonfinPingResponse
     public string Version { get; set; } = string.Empty;
     public bool? SettingsSyncEnabled { get; set; }
     public string? ServerName { get; set; }
-    public bool? JellyseerrEnabled { get; set; }
-    public string? JellyseerrUrl { get; set; }
+    public bool? SeerrEnabled { get; set; }
+    public string? SeerrUrl { get; set; }
     public bool? MdblistAvailable { get; set; }
     public bool? TmdbAvailable { get; set; }
     public MoonfinSettingsProfile? DefaultSettings { get; set; }
+
+    // Legacy field names so clients from before the Seerr rename keep reading these.
+    public bool? JellyseerrEnabled => SeerrEnabled;
+    public string? JellyseerrUrl => SeerrUrl;
 }
 
 /// <summary>
 /// Response for Seerr configuration.
 /// </summary>
-public class JellyseerrConfigResponse
+public class SeerrConfigResponse
 {
     public bool Enabled { get; set; }
     public string? Url { get; set; }

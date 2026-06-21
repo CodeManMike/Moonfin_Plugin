@@ -368,9 +368,9 @@ public class MoonfinSettingsService
 
     private void ClearLegacyFields(MoonfinUserSettings settings)
     {
-        settings.JellyseerrEnabled = null;
-        settings.JellyseerrApiKey = null;
-        settings.JellyseerrRows = null;
+        settings.SeerrEnabled = null;
+        settings.SeerrApiKey = null;
+        settings.SeerrRows = null;
         settings.MdblistEnabled = null;
         settings.MdblistApiKey = null;
         settings.MdblistRatingSources = null;

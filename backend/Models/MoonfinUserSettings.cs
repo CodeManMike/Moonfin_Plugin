@@ -36,12 +36,21 @@ public class MoonfinUserSettings
     // ─── Legacy v1 flat fields (for migration) ─────────────────────────
     // These are populated when reading a v1 file, then migrated to profiles.
 
+    [JsonPropertyName("seerrEnabled")]
+    public bool? SeerrEnabled { get; set; }
+    [JsonPropertyName("seerrApiKey")]
+    public string? SeerrApiKey { get; set; }
+    [JsonPropertyName("seerrRows")]
+    public SeerrRowsConfig? SeerrRows { get; set; }
+
+    // Legacy jellyseerr* aliases so pre-rename payloads still deserialize.
     [JsonPropertyName("jellyseerrEnabled")]
-    public bool? JellyseerrEnabled { get; set; }
+    public bool? JellyseerrEnabledCompat { get => SeerrEnabled; set { if (value != null) { SeerrEnabled = value; } } }
     [JsonPropertyName("jellyseerrApiKey")]
-    public string? JellyseerrApiKey { get; set; }
+    public string? JellyseerrApiKeyCompat { get => SeerrApiKey; set { if (value != null) { SeerrApiKey = value; } } }
     [JsonPropertyName("jellyseerrRows")]
-    public JellyseerrRowsConfig? JellyseerrRows { get; set; }
+    public SeerrRowsConfig? JellyseerrRowsCompat { get => SeerrRows; set { if (value != null) { SeerrRows = value; } } }
+
     [JsonPropertyName("mdblistEnabled")]
     public bool? MdblistEnabled { get; set; }
     [JsonPropertyName("mdblistApiKey")]
@@ -142,7 +151,7 @@ public class MoonfinUserSettings
     [JsonIgnore]
     public bool NeedsMigration => SchemaVersion < 2 && Global == null &&
         (NavbarEnabled != null || MediaBarEnabled != null || MdblistEnabled != null ||
-         JellyseerrEnabled != null || TmdbEpisodeRatingsEnabled != null ||
+         SeerrEnabled != null || TmdbEpisodeRatingsEnabled != null ||
          NavbarPosition != null || DetailsPageEnabled != null);
 
     /// <summary>
@@ -175,7 +184,7 @@ public class MoonfinUserSettings
     public static readonly string[] ValidProfiles = { "global", "desktop", "mobile", "tv" };
 }
 
-public class JellyseerrRowsConfig
+public class SeerrRowsConfig
 {
     [JsonPropertyName("trendingMovies")]
     public bool? TrendingMovies { get; set; }

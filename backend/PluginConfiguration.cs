@@ -16,18 +16,24 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>
     /// Enable Seerr integration for all users.
     /// </summary>
-    public bool JellyseerrEnabled { get; set; } = false;
+    public bool SeerrEnabled { get; set; } = false;
 
     /// <summary>
     /// Seerr server URL for server-to-server communication from Jellyfin.
     /// Example: http://seerr:5055 or http://192.168.50.20:5055
     /// </summary>
-    public string? JellyseerrUrl { get; set; }
+    public string? SeerrUrl { get; set; }
 
     /// <summary>
     /// Optional display name override (e.g., "Requests", "Media Requests").
     /// Leave empty to auto-detect based on server version.
     /// </summary>
+    public string? SeerrDisplayName { get; set; }
+
+    // Legacy keys from before the Jellyseerr -> Seerr rename. Kept only so existing
+    // configs deserialize; MigrateLegacyKeys() copies them into the Seerr* keys on load.
+    public string? JellyseerrUrl { get; set; }
+    public bool JellyseerrEnabled { get; set; }
     public string? JellyseerrDisplayName { get; set; }
 
     /// <summary>
@@ -72,9 +78,83 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>
     /// Gets the effective Seerr URL for server-to-server communication.
     /// </summary>
-    public string? GetEffectiveJellyseerrUrl()
+    public string? GetEffectiveSeerrUrl()
     {
-        return JellyseerrUrl?.TrimEnd('/');
+        return NormalizeSeerrUrl(SeerrUrl ?? JellyseerrUrl);
+    }
+
+    /// <summary>
+    /// Copies any pre-rename Jellyseerr* values into the Seerr* keys and clears the
+    /// legacy ones. Returns true when something changed so the caller can persist.
+    /// </summary>
+    public bool MigrateLegacyKeys()
+    {
+        var changed = false;
+
+        if (string.IsNullOrEmpty(SeerrUrl) && !string.IsNullOrEmpty(JellyseerrUrl))
+        {
+            SeerrUrl = JellyseerrUrl;
+            changed = true;
+        }
+
+        if (!SeerrEnabled && JellyseerrEnabled)
+        {
+            SeerrEnabled = true;
+            changed = true;
+        }
+
+        if (string.IsNullOrEmpty(SeerrDisplayName) && !string.IsNullOrEmpty(JellyseerrDisplayName))
+        {
+            SeerrDisplayName = JellyseerrDisplayName;
+            changed = true;
+        }
+
+        if (JellyseerrUrl != null || JellyseerrEnabled || JellyseerrDisplayName != null)
+        {
+            JellyseerrUrl = null;
+            JellyseerrEnabled = false;
+            JellyseerrDisplayName = null;
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    /// <summary>
+    /// Normalizes a user-entered Seerr URL so downstream <see cref="Uri"/> parsing and
+    /// string concatenation always receive a sane absolute http/https address.
+    /// Trims whitespace and surrounding quotes, prepends <c>http://</c> when no scheme
+    /// is present (otherwise <c>new Uri("seerr:5055")</c> treats "seerr" as the scheme),
+    /// strips trailing slashes, and validates the result. Returns <c>null</c> when the
+    /// value is empty or not a usable http/https URL.
+    /// </summary>
+    public static string? NormalizeSeerrUrl(string? rawUrl)
+    {
+        if (string.IsNullOrWhiteSpace(rawUrl))
+        {
+            return null;
+        }
+
+        var value = rawUrl.Trim().Trim('"', '\'').Trim();
+        if (value.Length == 0)
+        {
+            return null;
+        }
+
+        if (!value.Contains("://", StringComparison.Ordinal))
+        {
+            value = "http://" + value;
+        }
+
+        value = value.TrimEnd('/');
+
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            return null;
+        }
+
+        return value;
     }
 }
 
