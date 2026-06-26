@@ -32,6 +32,9 @@ public class MoonfinController : ControllerBase
     
     private static readonly Type? _userManagerType = Type.GetType("MediaBrowser.Controller.Library.IUserManager, MediaBrowser.Controller");
     private static readonly MethodInfo? _userManagerGetUserById = _userManagerType?.GetMethod("GetUserById", [typeof(Guid)]);
+    private static readonly MethodInfo? _userManagerGetUsersIds = _userManagerType?.GetMethod("GetUsersIds", Type.EmptyTypes);
+    private static readonly PropertyInfo? _userManagerUsersIdsProperty = _userManagerType?.GetProperty("UsersIds");
+    private static readonly MethodInfo? _userManagerGetUsers = _userManagerType?.GetMethod("GetUsers", Type.EmptyTypes);
     private static readonly PropertyInfo? _userManagerUsersProperty = _userManagerType?.GetProperty("Users");
     private static readonly MethodInfo? _internalItemsQuerySetUser = typeof(InternalItemsQuery).GetMethod("SetUser", BindingFlags.Public | BindingFlags.Instance);
     private static readonly PropertyInfo? _internalItemsQueryUserProperty = typeof(InternalItemsQuery).GetProperty(nameof(InternalItemsQuery.User), BindingFlags.Public | BindingFlags.Instance);
@@ -1100,7 +1103,9 @@ public class MoonfinController : ControllerBase
 
     private List<Guid>? GetAllServerUserIds()
     {
-        if (_userManagerType == null || _userManagerUsersProperty == null)
+        if (_userManagerType == null ||
+    (_userManagerGetUsersIds == null && _userManagerUsersIdsProperty == null &&
+     _userManagerGetUsers == null && _userManagerUsersProperty == null))
         {
             return null;
         }
@@ -1111,7 +1116,20 @@ public class MoonfinController : ControllerBase
             return null;
         }
 
-        if (_userManagerUsersProperty.GetValue(userManager) is not IEnumerable<object> users)
+        // Preferred path: ask the server for the Guid list directly.
+        object? idsObject = _userManagerGetUsersIds != null
+            ? _userManagerGetUsersIds.Invoke(userManager, null)
+            : _userManagerUsersIdsProperty?.GetValue(userManager);
+        if (idsObject is IEnumerable<Guid> guidIds)
+        {
+            return guidIds.ToList();
+        }
+
+        // Fallback: enumerate User objects and reflect their Id (older shapes / safety).
+        object? usersObject = _userManagerGetUsers != null
+            ? _userManagerGetUsers.Invoke(userManager, null)
+            : _userManagerUsersProperty?.GetValue(userManager);
+        if (usersObject is not IEnumerable<object> users)
         {
             return null;
         }
