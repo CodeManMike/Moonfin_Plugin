@@ -118,11 +118,10 @@ if [ -f "$MANIFEST_FILE" ]; then
            "$MANIFEST_FILE" > "${MANIFEST_FILE}.tmp" && mv "${MANIFEST_FILE}.tmp" "$MANIFEST_FILE"
         echo "Updated manifest.json with new checksum and version"
     else
-        sed -i.bak -E "s/\"version\": \"[^\"]+\"/\"version\": \"$VERSION\"/" "$MANIFEST_FILE"
-        sed -i.bak -E "s/\"checksum\": \"[^\"]+\"/\"checksum\": \"$CHECKSUM\"/" "$MANIFEST_FILE"
-        sed -i.bak -E "s/\"timestamp\": \"[^\"]+\"/\"timestamp\": \"$TIMESTAMP\"/" "$MANIFEST_FILE"
-        rm -f "${MANIFEST_FILE}.bak"
-        echo "Updated manifest.json with new checksum and version (using sed)"
+        echo "Error: jq not found. manifest.json was NOT updated." >&2
+        echo "Install jq, or update versions[0] manually:" >&2
+        echo "  version=$VERSION  targetAbi=${TARGET_ABI}.0  checksum=$CHECKSUM  timestamp=$TIMESTAMP" >&2
+        exit 1
     fi
 fi
 

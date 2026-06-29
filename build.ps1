@@ -70,14 +70,17 @@ $Hash = (Get-FileHash $ZipPath -Algorithm MD5).Hash.ToUpper()
 $ManifestFile = Join-Path $RootDir "manifest.json"
 if (Test-Path $ManifestFile) {
     $Timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss")
-    $Manifest = Get-Content $ManifestFile -Raw | ConvertFrom-Json
+    # Read as UTF-8 explicitly, Get-Content defaults to the system codepage on
+    # Windows PowerShell 5.1 and would mangle non-ASCII characters
+    $Manifest = [System.IO.File]::ReadAllText($ManifestFile) | ConvertFrom-Json
 
     $Manifest[0].versions[0].version = $Version
     $Manifest[0].versions[0].targetAbi = "${TargetAbi}.0"
     $Manifest[0].versions[0].checksum = $Hash
     $Manifest[0].versions[0].timestamp = $Timestamp
 
-    $Manifest | ConvertTo-Json -Depth 10 | Set-Content $ManifestFile -Encoding UTF8
+    $Json = ConvertTo-Json -InputObject $Manifest -Depth 10
+    [System.IO.File]::WriteAllText($ManifestFile, $Json, (New-Object System.Text.UTF8Encoding $false))
     Write-Host "Updated manifest.json with new checksum and version"
 }
 
