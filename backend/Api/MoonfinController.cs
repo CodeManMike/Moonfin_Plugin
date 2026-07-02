@@ -1463,6 +1463,7 @@ public class MoonfinController : ControllerBase
 
         var userSeerrEnabled = userSettings?.Global?.SeerrEnabled
             ?? userSettings?.SeerrEnabled  // legacy v1
+            ?? config?.DefaultUserSettings?.SeerrEnabled
             ?? true;
 
         return Ok(new SeerrConfigResponse

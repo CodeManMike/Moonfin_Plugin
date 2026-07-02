@@ -652,6 +652,14 @@
                                 <option value="false">No</option>
                             </select>
                         </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultSeerrEnabled">Enable Seerr By Default</label>
+                            <select id="DefaultSeerrEnabled" is="emby-select">
+                                <option value="">Not set (defaults to enabled)</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="verticalSection">
@@ -2364,6 +2372,7 @@
                     setNullableBoolSelect('#DefaultMdblistShowRatingBadges', defaults.mdblistShowRatingBadges);
                     loadRatingSourcesPicker(defaults.mdblistRatingSources || null);
                     setNullableBoolSelect('#DefaultSeerrBlockNsfw', defaults.seerrBlockNsfw);
+                    setNullableBoolSelect('#DefaultSeerrEnabled', defaults.seerrEnabled);
 
                     var sourceSelect = document.querySelector('#DefaultMediaBarSourceType');
                     var collectionPickerSection = document.querySelector('#DefaultCollectionPickerSection');
@@ -2577,6 +2586,7 @@
                         config.DefaultUserSettings.mdblistShowRatingBadges = getNullableBoolSelect('#DefaultMdblistShowRatingBadges');
                         config.DefaultUserSettings.mdblistRatingSources = getRatingSourcesValue();
                         config.DefaultUserSettings.seerrBlockNsfw = getNullableBoolSelect('#DefaultSeerrBlockNsfw');
+                        config.DefaultUserSettings.seerrEnabled = getNullableBoolSelect('#DefaultSeerrEnabled');
 
                         return ApiClient.updatePluginConfiguration(MoonfinConfig.pluginUniqueId, config).then(function(result) {
                             Dashboard.processPluginConfigurationUpdateResult(result);
