@@ -358,6 +358,58 @@ public class TmdbSeasonRatingsResponse
     public List<TmdbEpisodeRatingResponse> Episodes { get; set; } = new();
 }
 
+/// <summary>
+/// TMDB collection ("box set") response returned to the client — the canonical
+/// list of parts (movies) that belong to a TMDB collection.
+/// </summary>
+public class TmdbCollectionResponse
+{
+    [JsonPropertyName("success")]
+    public bool Success { get; set; }
+
+    [JsonPropertyName("error")]
+    public string? Error { get; set; }
+
+    [JsonPropertyName("id")]
+    public int? Id { get; set; }
+
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("overview")]
+    public string? Overview { get; set; }
+
+    [JsonPropertyName("posterPath")]
+    public string? PosterPath { get; set; }
+
+    [JsonPropertyName("backdropPath")]
+    public string? BackdropPath { get; set; }
+
+    [JsonPropertyName("parts")]
+    public List<TmdbCollectionPart> Parts { get; set; } = new();
+}
+
+/// <summary>
+/// A single movie part within a TMDB collection.
+/// </summary>
+public class TmdbCollectionPart
+{
+    [JsonPropertyName("id")]
+    public int? Id { get; set; }
+
+    [JsonPropertyName("title")]
+    public string? Title { get; set; }
+
+    [JsonPropertyName("releaseDate")]
+    public string? ReleaseDate { get; set; }
+
+    [JsonPropertyName("posterPath")]
+    public string? PosterPath { get; set; }
+
+    [JsonPropertyName("overview")]
+    public string? Overview { get; set; }
+}
+
 // ===== Raw TMDB API Models =====
 
 internal class TmdbEpisodeApiResponse
@@ -397,4 +449,43 @@ internal class TmdbSeasonApiResponse
 
     [JsonPropertyName("episodes")]
     public List<TmdbEpisodeApiResponse>? Episodes { get; set; }
+}
+
+internal class TmdbCollectionApiResponse
+{
+    [JsonPropertyName("id")]
+    public int? Id { get; set; }
+
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("overview")]
+    public string? Overview { get; set; }
+
+    [JsonPropertyName("poster_path")]
+    public string? PosterPath { get; set; }
+
+    [JsonPropertyName("backdrop_path")]
+    public string? BackdropPath { get; set; }
+
+    [JsonPropertyName("parts")]
+    public List<TmdbCollectionPartApiResponse>? Parts { get; set; }
+}
+
+internal class TmdbCollectionPartApiResponse
+{
+    [JsonPropertyName("id")]
+    public int? Id { get; set; }
+
+    [JsonPropertyName("title")]
+    public string? Title { get; set; }
+
+    [JsonPropertyName("release_date")]
+    public string? ReleaseDate { get; set; }
+
+    [JsonPropertyName("poster_path")]
+    public string? PosterPath { get; set; }
+
+    [JsonPropertyName("overview")]
+    public string? Overview { get; set; }
 }
