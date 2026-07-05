@@ -25,6 +25,8 @@ public class TmdbController : ControllerBase
     private static readonly ConcurrentDictionary<string, (TmdbSeasonRatingsResponse Response, DateTimeOffset CachedAt)> _seasonCache = new();
     // Cache: key = "tmdbId:season:episode" => (response, timestamp)
     private static readonly ConcurrentDictionary<string, (TmdbEpisodeRatingResponse Response, DateTimeOffset CachedAt)> _episodeCache = new();
+    // Cache: key = "collection:tmdbCollectionId" => (response, timestamp)
+    private static readonly ConcurrentDictionary<string, (TmdbCollectionResponse Response, DateTimeOffset CachedAt)> _collectionCache = new();
     private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(24);
 
     public TmdbController(MoonfinSettingsService settingsService, IHttpClientFactory httpClientFactory)
@@ -245,6 +247,118 @@ public class TmdbController : ControllerBase
         catch (Exception ex)
         {
             return Ok(new TmdbSeasonRatingsResponse
+            {
+                Success = false,
+                Error = $"Failed to fetch from TMDB: {ex.Message}"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Fetches a canonical TMDB collection ("box set") by its TMDB collection id,
+    /// including all parts (movies) that belong to it.
+    /// Uses the authenticated user's TMDB API key from their settings.
+    /// </summary>
+    /// <param name="tmdbCollectionId">TMDB collection id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    [HttpGet("Collection/{tmdbCollectionId}")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<TmdbCollectionResponse>> GetCollection(
+        [FromRoute] int tmdbCollectionId,
+        CancellationToken cancellationToken)
+    {
+        if (tmdbCollectionId <= 0)
+        {
+            return BadRequest(new { Error = "Invalid tmdbCollectionId" });
+        }
+
+        var apiKey = await GetUserApiKey();
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            return Ok(new TmdbCollectionResponse
+            {
+                Success = false,
+                Error = "No TMDB API key configured. Add your key in Moonfin Settings, or ask your server admin to set a server-wide key."
+            });
+        }
+
+        var cacheKey = $"collection:{tmdbCollectionId}";
+        if (_collectionCache.TryGetValue(cacheKey, out var cached) && DateTimeOffset.UtcNow - cached.CachedAt < CacheTtl)
+        {
+            return Ok(cached.Response);
+        }
+
+        try
+        {
+            var url = $"https://api.themoviedb.org/3/collection/{tmdbCollectionId}";
+            var client = CreateClient();
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            ApplyAuth(request, apiKey);
+
+            using var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
+
+            if ((int)response.StatusCode == 429)
+            {
+                return Ok(new TmdbCollectionResponse
+                {
+                    Success = false,
+                    Error = "TMDB rate limit reached. Try again later."
+                });
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return Ok(new TmdbCollectionResponse
+                {
+                    Success = false,
+                    Error = $"TMDB returned status {(int)response.StatusCode}"
+                });
+            }
+
+            var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            var data = JsonSerializer.Deserialize<TmdbCollectionApiResponse>(json, JsonOptions);
+
+            var parts = new List<TmdbCollectionPart>();
+            if (data?.Parts != null)
+            {
+                foreach (var part in data.Parts)
+                {
+                    parts.Add(new TmdbCollectionPart
+                    {
+                        Id = part.Id,
+                        Title = part.Title,
+                        ReleaseDate = part.ReleaseDate,
+                        PosterPath = part.PosterPath,
+                        Overview = part.Overview
+                    });
+                }
+            }
+
+            var result = new TmdbCollectionResponse
+            {
+                Success = true,
+                Id = data?.Id,
+                Name = data?.Name,
+                Overview = data?.Overview,
+                PosterPath = data?.PosterPath,
+                BackdropPath = data?.BackdropPath,
+                Parts = parts
+            };
+
+            _collectionCache[cacheKey] = (result, DateTimeOffset.UtcNow);
+
+            return Ok(result);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            return Ok(new TmdbCollectionResponse
             {
                 Success = false,
                 Error = $"Failed to fetch from TMDB: {ex.Message}"
