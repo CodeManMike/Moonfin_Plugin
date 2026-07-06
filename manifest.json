@@ -12,8 +12,8 @@
       "changelog": "Features:\n\n- Home Screen Sections plugin rows now render correctly in Moonfin clients, mirroring the order configured in Jellyfin.\n- New Collections screen showing real collection contents, an ACdb tag-filtered collections row, and a missing-items section that lets you request missing movies directly through Seerr.\n- Cinema Mode: an immersive presentation mode that suppresses player chrome during the main feature and smooths the preroll-to-feature transition.\n- Two new built-in theme presets: Moonlit Glass (glassmorphism) and Arcade Cartridge (retro pixel art).\n- Genres browsing redesigned as a two-pane list with a live item preview panel, replacing the old artwork-heavy grid.\n- In-player episode and season switcher, letting you jump to another episode or season without leaving playback.\n- Deeper Seerr integration: request a season directly from the library/detail screen and resolve series identity automatically.\n- Sleep timer moved fully client-side (no longer depends on the separate Jellysleep plugin).\n- Numerous UX polish items: snappier D-pad navigation, non-shifting row focus treatment, quick-filter chips extended to movie/show libraries, trickplay prefetching, and hardware seek acceleration matching D-pad behavior.\n\nBug Fixes:\n\n- Fixed duplicate home screen sections and fixed sorting being ignored in folder/library browsing.\n- Fixed Android TV UI scaling to apply on all TV platforms, not just Apple TV.\n- Admin can now set whether Seerr is enabled by default for new users, instead of it always being on.\n\nAll backend API changes in this release are additive only — no existing endpoint, field, or response shape was changed or removed, so older Moonfin clients continue to work unchanged against this version.",
       "targetAbi": "10.10.0.0",
       "sourceUrl": "https://github.com/Moonfin-Client/Plugin/releases/download/1.10.0/Moonfin.Server-1.10.0.0.zip",
-      "checksum": "9CA51E857939EBA7CBAABC2F718D3BE6",
-      "timestamp": "2026-07-06T15:38:09",
+      "checksum": "1D9D4CEBD9C2B5F886F7819FCA108147",
+      "timestamp": "2026-07-06T15:42:41",
       "dependencies": []
     },
     {
