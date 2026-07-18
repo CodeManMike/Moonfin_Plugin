@@ -91,6 +91,198 @@
         #MoonfinConfigPage #AdminThemeChooseBtn:hover {
             background: rgba(255, 255, 255, 0.14);
         }
+
+        #MoonfinConfigPage .moonfinPreviewPanel {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.025);
+            padding: 12px;
+            margin-bottom: 1.2em;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewHeader {
+            display: flex;
+            align-items: baseline;
+            gap: 0.6em;
+            margin-bottom: 0.6em;
+            font-weight: 600;
+            font-size: 0.95em;
+            color: #00a4dc;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewNote {
+            font-weight: 400;
+            font-size: 0.8em;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        #MoonfinConfigPage .moonfinPreviewScreen {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            max-width: 420px;
+            height: 190px;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #14181d;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #MoonfinConfigPage .moonfinPreviewScreen.navTop {
+            flex-direction: column;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewNav {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 10px;
+            width: 30px;
+            padding: 8px 0;
+            background: rgba(255, 255, 255, 0.06);
+            flex-shrink: 0;
+            transition: background 0.15s ease;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewScreen.navTop .moonfinPreviewNav {
+            flex-direction: row;
+            width: 100%;
+            height: 22px;
+            padding: 0 8px;
+            justify-content: flex-start;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewNavIcon {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        #MoonfinConfigPage .moonfinPreviewNavIcon.moonfinPreviewNavIconActive {
+            background: var(--moonfin-preview-accent, #00a4dc);
+        }
+
+        #MoonfinConfigPage .moonfinPreviewBody {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            padding: 8px;
+            gap: 8px;
+            overflow: hidden;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewMediaBar {
+            height: 44px;
+            border-radius: 4px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+            display: flex;
+            align-items: flex-end;
+            padding: 6px 8px;
+            flex-shrink: 0;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewMediaBar.moonfinPreviewMediaBarOff {
+            display: none;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewMediaBarTitle {
+            font-size: 0.7em;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        #MoonfinConfigPage .moonfinPreviewRowTitle {
+            font-size: 0.65em;
+            color: rgba(255, 255, 255, 0.55);
+            margin-bottom: 4px;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewRail {
+            display: flex;
+            gap: 6px;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewScreen[data-density="compact"] .moonfinPreviewRail {
+            gap: 4px;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewCard {
+            position: relative;
+            width: 48px;
+            height: 68px;
+            border-radius: 4px;
+            background: linear-gradient(160deg, #3a4048, #20242a);
+            flex-shrink: 0;
+            transition: transform 0.15s ease, width 0.15s ease, height 0.15s ease;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewScreen[data-poster-size="small"] .moonfinPreviewCard {
+            width: 38px;
+            height: 54px;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewScreen[data-poster-size="medium"] .moonfinPreviewCard {
+            width: 48px;
+            height: 68px;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewScreen[data-poster-size="large"] .moonfinPreviewCard {
+            width: 58px;
+            height: 84px;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewScreen[data-poster-size="extraLarge"] .moonfinPreviewCard {
+            width: 68px;
+            height: 98px;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewScreen[data-density="compact"] .moonfinPreviewCard {
+            width: 38px;
+            height: 54px;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewCard.moonfinPreviewCardFocused {
+            outline: 2px solid var(--moonfin-preview-accent, #00a4dc);
+            outline-offset: 1px;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewScreen[data-focus-expand="true"] .moonfinPreviewCard.moonfinPreviewCardFocused {
+            transform: scale(1.12);
+            z-index: 1;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewWatchedBadge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--moonfin-preview-accent, #00a4dc);
+            color: #fff;
+            font-size: 8px;
+            line-height: 12px;
+            text-align: center;
+            display: none;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewScreen[data-watched-visible="true"] .moonfinPreviewWatchedBadge {
+            display: block;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewSummary {
+            margin-top: 0.7em;
+            font-size: 0.78em;
+            color: rgba(255, 255, 255, 0.55);
+            line-height: 1.6;
+        }
+
+        #MoonfinConfigPage .moonfinPreviewSummary strong {
+            color: rgba(255, 255, 255, 0.8);
+        }
     </style>
 </head>
 <body>
@@ -237,6 +429,37 @@
                         <div style="background-color: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107; border-radius: 4px; padding: 0.8em 1.2em; margin-bottom: 1.2em; font-size: 0.9em;">
                             <strong>Important:</strong> New nullable settings use <strong>Not set / Yes / No</strong> style inputs.
                             <strong>Not set</strong> means "do not force this value" so users keep their own choice.
+                        </div>
+
+                        <div class="moonfinPreviewPanel">
+                            <div class="moonfinPreviewHeader">
+                                <span>Live Preview</span>
+                                <span class="moonfinPreviewNote">Approximate mockup - updates as you edit the settings below.</span>
+                            </div>
+                            <div class="moonfinPreviewScreen" id="MoonfinPreviewScreen">
+                                <div class="moonfinPreviewNav" id="MoonfinPreviewNav">
+                                    <div class="moonfinPreviewNavIcon"></div>
+                                    <div class="moonfinPreviewNavIcon"></div>
+                                    <div class="moonfinPreviewNavIcon"></div>
+                                </div>
+                                <div class="moonfinPreviewBody">
+                                    <div class="moonfinPreviewMediaBar" id="MoonfinPreviewMediaBar">
+                                        <div class="moonfinPreviewMediaBarTitle">Featured Title</div>
+                                    </div>
+                                    <div>
+                                        <div class="moonfinPreviewRowTitle">Continue Watching</div>
+                                        <div class="moonfinPreviewRail">
+                                            <div class="moonfinPreviewCard"></div>
+                                            <div class="moonfinPreviewCard moonfinPreviewCardFocused">
+                                                <span class="moonfinPreviewWatchedBadge">&#10003;</span>
+                                            </div>
+                                            <div class="moonfinPreviewCard"></div>
+                                            <div class="moonfinPreviewCard"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="moonfinPreviewSummary" id="MoonfinPreviewSummary"></div>
                         </div>
 
                         <h4 style="margin: 1em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Appearance</h4>
@@ -2264,6 +2487,94 @@
                     });
             }
 
+            var MOONFIN_PREVIEW_COLORS = {
+                white: '#ffffff',
+                black: '#000000',
+                gray: '#808080',
+                darkBlue: '#003366',
+                purple: '#6a0dad',
+                teal: '#008080',
+                navy: '#000080',
+                charcoal: '#36454f',
+                brown: '#8b4513',
+                darkRed: '#8b0000',
+                darkGreen: '#006400',
+                slate: '#708090',
+                indigo: '#4b0082',
+                moonfinCyan: '#00a4dc',
+                neonPulseMagenta: '#ff2e92'
+            };
+
+            var MOONFIN_PREVIEW_WATCHED_IDS = [
+                'DefaultFocusColor', 'DefaultNavbarPosition', 'DefaultNavbarColor',
+                'DefaultPosterSize', 'DefaultLibraryGridDensity', 'DefaultCardFocusExpansion',
+                'DefaultWatchedIndicator', 'DefaultMediaBarMode',
+                'DefaultDisplayFavoritesRows', 'DefaultDisplayCollectionsRows', 'DefaultDisplayGenresRows',
+                'DefaultDisplayPlaylistsRows', 'DefaultDisplayAudioRows', 'DefaultDisplaySeerrRows',
+                'DefaultCinemaModeEnabled', 'DefaultConfirmExit', 'DefaultScreensaverMode'
+            ];
+
+            function moonfinPreviewFieldValue(id) {
+                var el = document.getElementById(id);
+                return el ? el.value : '';
+            }
+
+            function updateMoonfinSettingsPreview() {
+                var screen = document.getElementById('MoonfinPreviewScreen');
+                if (!screen) return;
+
+                var focusColor = moonfinPreviewFieldValue('DefaultFocusColor') || 'moonfinCyan';
+                var accentHex = MOONFIN_PREVIEW_COLORS[focusColor] || '#00a4dc';
+                screen.style.setProperty('--moonfin-preview-accent', accentHex);
+
+                var navPosition = moonfinPreviewFieldValue('DefaultNavbarPosition') || 'left';
+                screen.classList.toggle('navTop', navPosition === 'top');
+
+                var nav = document.getElementById('MoonfinPreviewNav');
+                if (nav) {
+                    var navColor = moonfinPreviewFieldValue('DefaultNavbarColor');
+                    var navHex = MOONFIN_PREVIEW_COLORS[navColor];
+                    nav.style.background = navHex ? (navHex + '33') : '';
+                    var icons = nav.querySelectorAll('.moonfinPreviewNavIcon');
+                    for (var i = 0; i < icons.length; i++) {
+                        icons[i].classList.toggle('moonfinPreviewNavIconActive', i === 0);
+                    }
+                }
+
+                screen.setAttribute('data-poster-size', moonfinPreviewFieldValue('DefaultPosterSize') || 'medium');
+                screen.setAttribute('data-density', moonfinPreviewFieldValue('DefaultLibraryGridDensity') || 'comfortable');
+                screen.setAttribute('data-focus-expand', getNullableBoolSelect('#DefaultCardFocusExpansion') === false ? 'false' : 'true');
+
+                var watched = moonfinPreviewFieldValue('DefaultWatchedIndicator');
+                screen.setAttribute('data-watched-visible', watched === 'never' ? 'false' : 'true');
+
+                var mediaBar = document.getElementById('MoonfinPreviewMediaBar');
+                if (mediaBar) {
+                    mediaBar.classList.toggle('moonfinPreviewMediaBarOff', moonfinPreviewFieldValue('DefaultMediaBarMode') === 'off');
+                }
+
+                var summary = document.getElementById('MoonfinPreviewSummary');
+                if (summary) {
+                    var rowLabels = [];
+                    if (getNullableBoolSelect('#DefaultDisplayFavoritesRows') !== false) rowLabels.push('Favorites');
+                    if (getNullableBoolSelect('#DefaultDisplayCollectionsRows') !== false) rowLabels.push('Collections');
+                    if (getNullableBoolSelect('#DefaultDisplayGenresRows') !== false) rowLabels.push('Genres');
+                    if (getNullableBoolSelect('#DefaultDisplayPlaylistsRows') !== false) rowLabels.push('Playlists');
+                    if (getNullableBoolSelect('#DefaultDisplayAudioRows') !== false) rowLabels.push('Audio');
+                    if (getNullableBoolSelect('#DefaultDisplaySeerrRows') !== false) rowLabels.push('Seerr');
+
+                    var cinemaVal = getNullableBoolSelect('#DefaultCinemaModeEnabled');
+                    var confirmVal = getNullableBoolSelect('#DefaultConfirmExit');
+                    var screensaverVal = moonfinPreviewFieldValue('DefaultScreensaverMode');
+
+                    summary.innerHTML =
+                        '<div><strong>Extra rows:</strong> ' + (rowLabels.length ? rowLabels.join(', ') : 'none set to show') + '</div>' +
+                        '<div><strong>Cinema Mode:</strong> ' + (cinemaVal === null ? 'not set' : (cinemaVal ? 'on' : 'off')) +
+                        ' &middot; <strong>Confirm Exit:</strong> ' + (confirmVal === null ? 'not set' : (confirmVal ? 'on' : 'off')) +
+                        ' &middot; <strong>Screensaver:</strong> ' + (screensaverVal || 'not set') + '</div>';
+                }
+            }
+
             function ensureMoonfinAdminRuntimeStyles() {
                 var source = document.getElementById('MoonfinAdminRuntimeStyleSource');
                 if (!source || !source.textContent) {
@@ -2420,6 +2731,14 @@
                     sourceSelect.addEventListener('change', togglePickerVisibility);
                     togglePickerVisibility();
                     loadAdminGenrePicker(defaults.mediaBarExcludedGenres || []);
+
+                    MOONFIN_PREVIEW_WATCHED_IDS.forEach(function(id) {
+                        var el = document.getElementById(id);
+                        if (el) {
+                            el.addEventListener('change', updateMoonfinSettingsPreview);
+                        }
+                    });
+                    updateMoonfinSettingsPreview();
 
                     Dashboard.hideLoadingMsg();
                 });
