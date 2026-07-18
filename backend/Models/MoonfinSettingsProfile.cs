@@ -179,6 +179,18 @@ public class MoonfinSettingsProfile
     [JsonPropertyName("homeRowsStyle")]
     public string? HomeRowsStyle { get; set; }
 
+    [JsonPropertyName("detailScreenStyle")]
+    public string? DetailScreenStyle { get; set; }
+
+    [JsonPropertyName("screensaverMode")]
+    public string? ScreensaverMode { get; set; }
+
+    [JsonPropertyName("cinemaModeEnabled")]
+    public bool? CinemaModeEnabled { get; set; }
+
+    [JsonPropertyName("libraryGridDensity")]
+    public string? LibraryGridDensity { get; set; }
+
     [JsonPropertyName("fullScreenRows")]
     public bool? FullScreenRows { get; set; }
 

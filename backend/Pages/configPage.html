@@ -290,12 +290,37 @@
                             </select>
                         </div>
                         <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultConfirmExit">Confirm Before Exit</label>
+                            <select id="DefaultConfirmExit" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                        <div class="inputContainer">
                             <label class="inputLabel inputLabelUnfocused" for="DefaultScreensaverMode">Screensaver Mode</label>
                             <select id="DefaultScreensaverMode" is="emby-select">
                                 <option value="">Not set (user decides)</option>
                                 <option value="off">Off</option>
                                 <option value="logo">Logo</option>
                                 <option value="library">Library</option>
+                            </select>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultCinemaModeEnabled">Cinema Mode</label>
+                            <select id="DefaultCinemaModeEnabled" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                            <div class="fieldDescription">Suppresses player chrome during the main feature and smooths the preroll-to-feature transition.</div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="DefaultLibraryGridDensity">Library Grid Density</label>
+                            <select id="DefaultLibraryGridDensity" is="emby-select">
+                                <option value="">Not set (user decides)</option>
+                                <option value="comfortable">Comfortable</option>
+                                <option value="compact">Compact</option>
                             </select>
                         </div>
                         <h4 style="margin: 1em 0 0.5em; font-size: 0.95em; color: #00a4dc;">Navigation</h4>
@@ -2328,7 +2353,10 @@
                     setSelectValue('#DefaultFocusColor', defaults.focusColor, 'Configured color');
                     setSelectValue('#DefaultWatchedIndicator', defaults.watchedIndicator, 'Configured mode');
                     setNullableBoolSelect('#DefaultCardFocusExpansion', defaults.cardFocusExpansion);
+                    setNullableBoolSelect('#DefaultConfirmExit', defaults.confirmExit);
                     setSelectValue('#DefaultScreensaverMode', defaults.screensaverMode, 'Configured mode');
+                    setNullableBoolSelect('#DefaultCinemaModeEnabled', defaults.cinemaModeEnabled);
+                    setSelectValue('#DefaultLibraryGridDensity', defaults.libraryGridDensity, 'Configured density');
 
                     setSelectValue('#DefaultNavbarPosition', defaults.navbarPosition, 'Configured position');
                     setSelectValue('#DefaultNavbarColor', defaults.navbarColor, 'Configured color');
@@ -2521,7 +2549,10 @@
                         config.DefaultUserSettings.focusColor = document.querySelector('#DefaultFocusColor').value || null;
                         config.DefaultUserSettings.watchedIndicator = document.querySelector('#DefaultWatchedIndicator').value || null;
                         config.DefaultUserSettings.cardFocusExpansion = getNullableBoolSelect('#DefaultCardFocusExpansion');
+                        config.DefaultUserSettings.confirmExit = getNullableBoolSelect('#DefaultConfirmExit');
                         config.DefaultUserSettings.screensaverMode = document.querySelector('#DefaultScreensaverMode').value || null;
+                        config.DefaultUserSettings.cinemaModeEnabled = getNullableBoolSelect('#DefaultCinemaModeEnabled');
+                        config.DefaultUserSettings.libraryGridDensity = document.querySelector('#DefaultLibraryGridDensity').value || null;
 
                         config.DefaultUserSettings.navbarPosition = document.querySelector('#DefaultNavbarPosition').value || null;
                         config.DefaultUserSettings.navbarColor = document.querySelector('#DefaultNavbarColor').value || null;
