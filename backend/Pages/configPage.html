@@ -130,6 +130,11 @@
 
         #MoonfinConfigPage .moonfinPreviewScreen.navTop {
             flex-direction: column;
+            /* The top nav strip eats into the body's available height, which
+               isn't a factor in the default left-nav layout - without this,
+               a focused card at Large/Extra Large poster size clips under
+               this container's overflow:hidden. */
+            height: 215px;
         }
 
         #MoonfinConfigPage .moonfinPreviewNav {
